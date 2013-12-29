@@ -1,12 +1,10 @@
-{% import "_forms.html" as forms %}
-
 {% extends 'layout.html' %}
 {% block content %}
 
     <h6>Issues</h6>
     <ul>
         {% for issue in issues %}
-            <li data-id="{{ issue.id }}">
+            <li>
                 <h6><a href="{{ url_for('issue_api', id=issue.id) }}">{{ issue.title }}</a></h6>
                 <div>{{ issue.body }}</div>
                 <div class='issue--meta'>

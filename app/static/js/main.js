@@ -30,11 +30,21 @@ require(['config'], function() {
         $('[data-action=close], [data-action=open]').on('click', function(e) {
             e.preventDefault();
             var link = $(this),
-                url = $(this).attr('href');
+                url = '/issues/' + $(this).data('id') + '/' + $(this).data('action');
             $.ajax(url, {
                 type: 'PUT',
                 success: function() {
-                    console.log('success!')
+                    if ( link.data('action') === 'close' ) {
+                        link
+                            .attr('class', 'open')
+                            .data('action', 'open')
+                            .text('reopen');
+                    } else {
+                        link
+                            .attr('class', 'close')
+                            .data('action', 'close')
+                            .text('close');
+                    }
                 }
             });
             return false;

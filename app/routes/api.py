@@ -13,11 +13,12 @@ def register_api(view, endpoint, url, id='id', id_type='int'):
     view_func = view.as_view(endpoint)
     app.add_url_rule(url, defaults={id: None}, view_func=view_func, methods=['GET'])
     app.add_url_rule(url, view_func=view_func, methods=['POST'])
-    app.add_url_rule('%s<%s:%s>' % (url, id_type, id), view_func=view_func, methods=['GET', 'PUT', 'DELETE'])
+    app.add_url_rule('%s<%s:%s>/' % (url, id_type, id), view_func=view_func, methods=['GET', 'PUT', 'DELETE'])
 
 
 class IssueAPI(MethodView):
     form = model_form(Issue, exclude=['created_at', 'author', 'comments'])
+    comment_form = model_form(Comment, exclude=['created_at', 'author'])
 
     def get_context(self, id):
         issue = Issue.objects.get_or_404(id=id)
@@ -38,8 +39,13 @@ class IssueAPI(MethodView):
             return render_template('issue/list.html', issues=issues, form=form)
         # Detail view
         else:
+            comment_form = self.comment_form(request.form)
             context = self.get_context(id)
-            return render_template('issue/detail.html', **context)
+            issue = context['issue']
+
+            all_events = issue.events + issue.comments
+            all_events.sort(key=lambda i:i.created_at)
+            return render_template('issue/detail.html', issue=issue, events=all_events, form=comment_form, current_user_id=current_user().id)
 
     def post(self):
         form = self.form(request.form)
@@ -111,46 +117,28 @@ def open_issues():
 
 
 class CommentAPI(MethodView):
-    form = model_form(Comment, exclude=['created_at'])
-
-    def get_context(self, id):
-        comment = Comment.objects.get_or_404(id=id)
-        form = self.form(request.form)
-
-        context = {
-                'comment': comment,
-                'form': form
-        }
-        return context
+    form = model_form(Comment, exclude=['created_at', 'id'])
 
     @requires_oauth
-    def get(self, id):
-        # List view
-        if id is None:
-            comments = Comment.objects.all()
-            form = self.form(request.form)
-            return render_template('comment/list.html', comments=comments, form=form)
-        # Detail view
-        else:
-            context = self.get_context(id)
-            return render_template('comment/detail.html', **context)
-
-    def post(self):
+    def post(self, issue_id):
         form = self.form(request.form)
+        issue = Issue.objects.get_or_404(id=issue_id)
 
         if form.validate():
             comment = Comment()
             form.populate_obj(comment)
-            comment.save()
-            return redirect(url_for('comment_api'))
+            comment.author = current_user()
+            issue.comments.append(comment)
+            issue.save()
+            return redirect(url_for('issue_api', id=issue.id))
 
-        return redirect(url_for('comment_api'))
+        return redirect(url_for('issue_api', id=issue.id))
 
-    def delete(self, id):
-        context = self.get_context(id)
-        comment = context.get('comment')
-        comment.delete()
-
+    @requires_oauth
+    def delete(self, issue_id, id):
+        Issue.objects(id=issue_id).update_one(pull__comments__id=id)
         return jsonify({'success':True})
 
-register_api(CommentAPI, 'comment_api', '/comment/', id='id', id_type='string')
+view_func = CommentAPI.as_view('comment_api')
+app.add_url_rule('/issues/<string:issue_id>/comments', view_func=view_func, methods=['POST'])
+app.add_url_rule('/issues/<string:issue_id>/comments/<string:id>', view_func=view_func, methods=['PUT', 'DELETE'])

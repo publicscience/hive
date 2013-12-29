@@ -4,6 +4,7 @@
 $primary-color: #e44545
 $secondary-color: #baebd3
 $background-color: #fff
+$muted-color: #ccc
 $error-color: #DD4343
 $warning-color: #E2E942
 $success-color: #26CA7B
@@ -113,5 +114,44 @@ button.close
 nav
     float: right
 
-.issue--meta
+.issue--meta,
+.comment--meta,
+.event--meta
     font-size: 0.75em
+    .thumb
+        margin-right: 0.5em
+    li
+        padding: 0.5em 0
+.meta--time
+    color: $muted-color
+    font-style: italic
+    font-size: 0.75em
+    margin: 0 0.5em
+
+.issue--event
+    background: #fafafa
+    padding: 1em 1.2em
+    border: 1px solid #f1f1f1
+    margin: 1em 0
+
+.body
+    padding: 2em 0
+
+.comment--body
+    font-size: 0.9em
+    padding-bottom: 0em
+
+.issue--detail
+    button
+        display: block
+        margin: 2em auto
+
+.comment--actions
+    font-size: 0.75em
+    color: $muted-color
+    text-align: right
+    padding: 0.5em 0
+    margin: 1em 0 0 0
+    a, a:visited
+        color: $muted-color
+        text-decoration: underline
