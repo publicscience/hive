@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <title>((HIVE))</title>
+
+  <link rel="stylesheet" href="/css/index.css">
+</head>
+
+<body>
+  <header class="primary--header">
+      <img src="/assets/img/hive.png">
+      <nav>
+          <ul class="list__horizontal">
+              <li><a href="/issues">issues</a></li>
+          </ul>
+      </nav>
+  </header>
+  <main role="main" id="main">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+              <div class="notifications">
+                {% for message in messages %}
+                    {{ message }}
+                {% endfor %}
+              </div>
+            {% endif %}
+        {% endwith %}
+
+    {# Yield for other templates. #}
+    {% block content %}
+    {% endblock %}
+  </main>
+
+  <script data-main="/js/main" src="/js/vendor/bower/requirejs/require.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+
+<h6>Open a new issue</h6>
+<form action="." method="post">
+    {{ form.csrf_token }} 
+    {{ form.title(autofocus=True) }}
+    {{ form.body }}
+    <div class="actions">
+        <input type="submit" class="open" value="Create new issue">
+    </div>
+</form>
+
+{% endblock %}
