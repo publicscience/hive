@@ -2,20 +2,22 @@ requirejs.config({
     baseUrl: '/js',
     paths: {
         jquery: '//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min',
-        modernizr: 'vendor/bower/modernizr/modernizr',
-        requirejs: 'vendor/bower/requirejs/require'
+        requirejs: 'vendor/bower/requirejs/require',
+        underscore: 'vendor/bower/underscore/underscore-min',
+        elastic: 'vendor/jquery.elastic',
+        mentions: 'vendor/jquery.mentionsInput'
     },
     shim: {
-        modernizr: {
-            exports: 'Modernizr'
+        underscore: {
+            exports: '_'
+        },
+        elastic: {
+            deps: ['jquery'],
+            exports: 'elastic'
+        },
+        mentions: {
+            deps: ['jquery', 'underscore', 'elastic'],
+            exports: 'mentions'
         }
-        // Example
-        //backbone: {
-            //deps: ['jquery', 'underscore'],
-            //exports: 'Backbone'
-        //},
-        //underscore: {
-            //exports: '_'
-        //}
     }
 });

@@ -1,6 +1,16 @@
 import datetime
 from app import db
 from bson.objectid import ObjectId
+from gfm import markdown
+import re
+
+# Replace mentions with links to the mentioned entity.
+mention_re = re.compile('''
+    @\[
+    (?P<mention>[^]]+)\]
+    \((?P<type>[a-z]+):
+    (?P<id>[a-z0-9]+)\)
+''', re.VERBOSE)
 
 def ago(time=False):
     """
@@ -62,6 +72,13 @@ class Comment(db.EmbeddedDocument):
 
     def ago(self):
         return ago(time=self.created_at)
+
+    def parsed(self):
+        parsed = self.body
+
+        # Replace mentions with links to the mentioned entity.
+        parsed = mention_re.sub('<a href="/\g<type>s/\g<id>">\g<mention></a>', parsed)
+        return markdown(parsed)
 
 class Event(db.EmbeddedDocument):
     created_at = db.DateTimeField(default=datetime.datetime.now, required=True)

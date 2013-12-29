@@ -46,7 +46,7 @@
                         <img src="{{ event.author.picture }}" class="thumb"> {{ event.author.name }} <span class="meta--time">{{ event.ago() }}</span>
                     </div>
                     <div class="comment--body body">
-                        {{ event.body }}
+                        {{ event.parsed()|safe }}
 
                         {% if event.author.id == current_user_id %}
                             <div class="comment--actions">
@@ -71,9 +71,12 @@
             </div>
         {% endfor %}
 
-        <form action="comments" method="post">
+        <form action="comments" method="post" class='js-preprocess'>
             {{ form.csrf_token }} 
-            {{ form.body(autofocus=True) }}
+            {{ form.body(class="mention-target") }}
+            <div>
+                <textarea autofocus class="mention"></textarea>
+            </div>
             <div class="actions">
                 <input type="submit" class="open" value="Comment">
             </div>

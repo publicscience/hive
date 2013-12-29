@@ -121,6 +121,15 @@ def label_issues(label):
     issues = Issue.objects(labels=label)
     return render_template('issue/list.html', issues=issues)
 
+@app.route('/users.json')
+def find_users():
+    query = request.args.get('query', '')
+    users = []
+    if query:
+        users = [{'id': user.google_id, 'name': user.name, 'avatar': user.picture, 'type': 'user'} for user in User.objects(name__icontains=query)]
+
+    return jsonify({'users': users})
+
 
 class CommentAPI(MethodView):
     form = model_form(Comment, exclude=['created_at', 'id'])

@@ -1,9 +1,9 @@
 {
-  "name": "brain",
+  "name": "hive",
   "version": "0.0.1",
   "dependencies": {
     "requirejs": "latest",
-    "modernizr": "latest"
+    "underscore": "latest"
   }
 }
 

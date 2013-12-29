@@ -3,13 +3,9 @@ require(['config'], function() {
 
     require([
             'jquery',
-            'modernizr'
-    ], function($, ø) {
-        // Do stuff.
-        console.log('main.js has loaded.');
-        console.log('running jQuery version ' + $().jquery + '.');
-        console.log('running Modernizr version ' + ø._version + '.');
-
+            'mentions'
+    ], function($) {
+        // Deleting things.
         $('[data-method=delete]').on('click', function(e) {
             e.preventDefault();
 
@@ -27,6 +23,7 @@ require(['config'], function() {
             return false;
         });
 
+        // Closing & opening issues.
         $('[data-action=close], [data-action=open]').on('click', function(e) {
             e.preventDefault();
             var link = $(this),
@@ -39,6 +36,28 @@ require(['config'], function() {
             });
             return false;
         });
+
+        $('textarea.mention').mentionsInput({
+            onDataRequest: function(mode, query, callback) {
+                $.ajax('/users.json', {
+                    data: {
+                        query: query
+                    },
+                    success: function(data) {
+                        callback.call(this, data['users']);
+                    }
+                });
+            }
+        });
+
+        $('.js-preprocess input[type=submit]').on('click', function(e) {
+            $('textarea.mention').each(function() {
+                $(this).mentionsInput('val', function(text) {
+                    $('textarea.mention-target').val(text);
+                });
+            });
+        });
+
     });
 
 });
