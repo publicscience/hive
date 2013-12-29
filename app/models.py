@@ -79,6 +79,7 @@ class Issue(db.Document):
     closer = db.ReferenceField(User)
     comments = db.ListField(db.EmbeddedDocumentField(Comment))
     events = db.ListField(db.EmbeddedDocumentField(Event))
+    labels = db.ListField(db.StringField(max_length=50))
     open = db.BooleanField(default=True)
 
     meta = {

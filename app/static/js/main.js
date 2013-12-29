@@ -15,11 +15,11 @@ require(['config'], function() {
 
             var link = $(this),
                 url = $(this).attr('href');
-            if (confirm('Are you sure you want to delete this mentor?')) {
+            if (confirm('Are you sure you want to delete this?')) {
                 $.ajax(url, {
                     type: 'DELETE',
                     success: function() {
-                        link.parent().remove();
+                        link.closest('.js-deletable').remove();
                     }
                 });
             }
@@ -34,17 +34,7 @@ require(['config'], function() {
             $.ajax(url, {
                 type: 'PUT',
                 success: function() {
-                    if ( link.data('action') === 'close' ) {
-                        link
-                            .attr('class', 'open')
-                            .data('action', 'open')
-                            .text('reopen');
-                    } else {
-                        link
-                            .attr('class', 'close')
-                            .data('action', 'close')
-                            .text('close');
-                    }
+                    window.location.reload()
                 }
             });
             return false;

@@ -17,7 +17,7 @@ def register_api(view, endpoint, url, id='id', id_type='int'):
 
 
 class IssueAPI(MethodView):
-    form = model_form(Issue, exclude=['created_at', 'author', 'comments'])
+    form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'open'])
     comment_form = model_form(Comment, exclude=['created_at', 'author'])
 
     def get_context(self, id):
@@ -53,6 +53,7 @@ class IssueAPI(MethodView):
         if form.validate():
             issue = Issue()
             form.populate_obj(issue)
+            issue.labels = [label.strip() for label in request.form.get('labels').split(',')]
             issue.author = current_user()
             issue.save()
             return redirect(url_for('issue_api'))
@@ -115,6 +116,11 @@ def open_issues():
     issues = Issue.objects(open=True)
     return render_template('issue/list.html', issues=issues)
 
+@app.route('/issues/label/<string:label>')
+def label_issues(label):
+    issues = Issue.objects(labels=label)
+    return render_template('issue/list.html', issues=issues)
+
 
 class CommentAPI(MethodView):
     form = model_form(Comment, exclude=['created_at', 'id'])
@@ -130,9 +136,9 @@ class CommentAPI(MethodView):
             comment.author = current_user()
             issue.comments.append(comment)
             issue.save()
-            return redirect(url_for('issue_api', id=issue.id))
+            return redirect(url_for('issue_api', id=issue.id, _method='GET'))
 
-        return redirect(url_for('issue_api', id=issue.id))
+        return redirect(url_for('issue_api', id=issue.id, _method='GET'))
 
     @requires_oauth
     def delete(self, issue_id, id):
