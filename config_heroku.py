@@ -1,4 +1,5 @@
 from os import environ as env
+import re
 
 # This is a config file for deploying to Heroku.
 # Set these values as environment variables in your Heroku environment with:
@@ -6,7 +7,33 @@ from os import environ as env
 
 CSRF_ENABLED = True
 SECRET_KEY = env['SECRET_KEY']
-MONGODB_SETTINGS = {'DB': 'pubsci_hive'}
+
+# Using MongoHQ on Heroku.
+# Ref: https://devcenter.heroku.com/articles/mongohq
+# Visit your application on Heroku's dashboard and navigate
+# to the MongoHQ dashboard. Under Admin > Users you can manage credentials.
+# You don't have to set this env var, MongoHQ sets it for you.
+MONGO_URL = env['MONGOHQ_URL']
+mongo_re = re.compile('''
+        mongodb://
+        (?P<user>[^:]+)
+        :
+        (?P<password>[^@]+)
+        @
+        (?P<host>[^:]+)
+        :
+        (?P<port>[0-9]+)
+        /
+        (?P<db>[a-z0-9]+)
+''', re.VERBOSE)
+mongo = mongo_re.match(MONGO_URL)
+MONGODB_SETTINGS = {
+    'DB': mongo.group('db'),
+    'USERNAME': mongo.group('username'),
+    'PASSWORD': mongo.group('password'),
+    'HOST': mongo.group('host'),
+    'PORT': mongo.group('port')
+}
 
 AUTH_USER = env['AUTH_USER']
 AUTH_PASS = env['AUTH_PASS']
