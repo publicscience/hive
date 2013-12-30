@@ -5,7 +5,7 @@
     <ul>
         {% for issue in issues %}
             <li>
-                <h6><a href="{{ url_for('issue_api', id=issue.id) }}">{{ issue.title }}</a></h6>
+                <h6><a href="{{ url_for('issue_api', id=issue.id, slug=project.slug) }}">{{ issue.title }}</a></h6>
                 <div>{{ issue.body }}</div>
                 <div class='issue--meta'>
                     <div>
@@ -23,11 +23,6 @@
                         {% endif %}
                     {% endif %}
                 </div>
-                {% if issue.open %}
-                    <button href="{{ url_for('close_issue', id=issue.id) }}" data-action="close" class="close">close</button>
-                {% else %}
-                    <button href="{{ url_for('open_issue', id=issue.id) }}" data-action="open" class="open">reopen</button>
-                {% endif %}
             </li>
         {% endfor %}
     </ul>

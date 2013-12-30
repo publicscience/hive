@@ -1,6 +1,6 @@
 from flask import render_template
 from app import app, db
-from app.routes import oauth, api
+from app.routes import oauth, api, project, comment, issue
 
 @app.errorhandler(404)
 def internal_error(error):

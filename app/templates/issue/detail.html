@@ -10,7 +10,7 @@
                     <ul class="list__horizontal issue--labels">
                         <li>Labels:</li>
                         {% for label in issue.labels %}
-                            <li><a href="{{ url_for('label_issues', label=label)}}">{{ label }}</a></li>
+                            <li><a href="{{ url_for('label_issues', label=label, slug=project.slug)}}">{{ label }}</a></li>
                         {% endfor %}
                     </ul>
                 </li>

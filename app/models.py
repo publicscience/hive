@@ -98,6 +98,7 @@ class Issue(db.Document):
     events = db.ListField(db.EmbeddedDocumentField(Event))
     labels = db.ListField(db.StringField(max_length=50))
     open = db.BooleanField(default=True)
+    project = db.ReferenceField('Project')
 
     meta = {
             'allow_inheritance': True,
