@@ -1,5 +1,4 @@
 Flask==0.10.1
-Flask-Rauth==0.3.2
 Flask-WTF==0.9.4
 Jinja2==2.7.1
 Markdown==2.3.1

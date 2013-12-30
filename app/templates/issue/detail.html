@@ -5,6 +5,12 @@
         <h4>{{ issue.title }}</h4>
         <div class="issue--body body">{{ issue.parsed()|safe }}</div>
         <ul class='issue--meta'>
+            {% if issue.github_id %}
+                <li>
+                {% set github_url = 'https://github.com/' ~ issue.project.repo ~ '/issues/' ~ issue.github_id %}
+                <a href="{{ github_url }}">View this issue on Github</a>
+                </li>
+            {% endif %}
             {% if issue.labels %}
                 <li>
                     <ul class="list__horizontal issue--labels">
@@ -48,9 +54,9 @@
                     <div class="comment--body body">
                         {{ event.parsed()|safe }}
 
-                        {% if event.author.id == current_user_id %}
+                        {% if event.author.id == current_user.id %}
                             <div class="comment--actions">
-                                    <a href="{{ url_for('comment_api', issue_id=issue.id, id=event.id) }}" data-method="delete">delete</a>
+                                    <a href="{{ url_for('comment_api', slug=slug, issue_id=issue.id, id=event.id) }}" data-method="delete">delete</a>
                             </div>
                         {% endif %}
                     </div>
@@ -61,7 +67,7 @@
                         <img src="{{ event.author.picture }}" class="thumb"> <span class="close">Closed</span> by {{ event.author.name }} <span class="meta--time">{{ event.ago() }}</span>
                     </div>
                 </div>
-                {% elif event.type == 'opened' %}
+                {% elif event.type == 'reopened' %}
                 <div class="issue--event event__opened">
                     <div class="event--meta">
                         <img src="{{ event.author.picture }}" class="thumb"> <span class="open">Reopened</span> by {{ event.author.name }} <span class="meta--time">{{ event.ago() }}</span>
@@ -71,16 +77,20 @@
             </div>
         {% endfor %}
 
-        <form action="comments" method="post" class='js-preprocess'>
-            {{ form.csrf_token }} 
-            {{ form.body(class="mention-target") }}
-            <div>
-                <textarea class="mention"></textarea>
-            </div>
-            <div class="actions">
-                <input type="submit" class="open" value="Comment">
-            </div>
-        </form>
+        {% if not issue.github_id or current_user.github_id %}
+            <form action="comments" method="post" class='js-preprocess'>
+                {{ form.csrf_token }} 
+                {{ form.body(class="mention-target") }}
+                <div>
+                    <textarea class="mention"></textarea>
+                </div>
+                <div class="actions">
+                    <input type="submit" class="open" value="Comment">
+                </div>
+            </form>
+        {% else %}
+            To participate in Github issues you must <a href="{{ url_for('github_login') }}">authenticate with your Github account</a>.
+        {% endif %}
     </section>
 
 {% endblock %}

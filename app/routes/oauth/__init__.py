@@ -1,12 +1,8 @@
 from app import app
 from flask import redirect, url_for, session
-from flask_oauth import OAuth, OAuthException
 from app.routes.auth import requires_auth
 from app.models import User
 from functools import wraps
-
-# Setup OAuth(2).
-oauth = OAuth()
 
 from . import google, github
 
@@ -61,9 +57,9 @@ def current_user():
 
     if not session.get('user_id', False):
         # Get and store user info in session.
-        headers = {'Authorization': 'OAuth '+session.get('google_access_token')[0]}
-        response = google.google.get('https://www.googleapis.com/oauth2/v1/userinfo?', headers=headers)
-        g_user = response.data
+        g = google.google.get_session(token=session['google_access_token'][0])
+        response = g.get('https://www.googleapis.com/oauth2/v1/userinfo?')
+        g_user = response.json()
         user, created = User.objects.get_or_create(google_id=g_user['id'])
         user.name = g_user['name']
         user.picture = g_user['picture']

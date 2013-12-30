@@ -5,6 +5,7 @@ import datetime
 
 class Project(db.Document):
     created_at = db.DateTimeField(default=datetime.datetime.now, required=True)
+    updated_at = db.DateTimeField(default=datetime.datetime.now, required=True)
     name = db.StringField(max_length=255, required=True, unique=True)
     repo = db.StringField(max_length=255)
     slug = db.StringField(max_length=255)
@@ -14,8 +15,15 @@ class Project(db.Document):
     # Not being used yet but later there may be need for this.
     users = db.ListField(db.ReferenceField('User'))
 
+    meta = {
+            'allow_inheritance': True,
+            'indexes': ['-created_at'],
+            'ordering': ['-updated_at']
+    }
+
     def clean(self):
         self.slug = slugify(self.name)
+        self.updated_at = datetime.datetime.now
 
     def open(self):
         return [issue for issue in self.issues if issue.open]

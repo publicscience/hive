@@ -1,11 +1,12 @@
 from app import app
 from app.routes.oauth import current_user, requires_login
-from flask import render_template, redirect, request, url_for, jsonify, flash
+from app.routes.oauth.github import github
+from flask import render_template, redirect, request, url_for, jsonify, flash, session
 from flask.views import MethodView
 from app.models import Issue, Comment, Event, Project
 from . import register_api
 from flask.ext.mongoengine.wtf import model_form
-from app.routes.oauth.github import github
+import json
 
 class IssueAPI(MethodView):
     form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'open', 'project'])
@@ -37,7 +38,7 @@ class IssueAPI(MethodView):
 
             all_events = issue.events + issue.comments
             all_events.sort(key=lambda i:i.created_at)
-            return render_template('issue/detail.html', issue=issue, events=all_events, form=comment_form, current_user_id=current_user().id, project=project)
+            return render_template('issue/detail.html', issue=issue, events=all_events, form=comment_form, current_user=current_user(), project=project)
 
     def post(self, slug):
         form = self.form(request.form)
@@ -49,6 +50,15 @@ class IssueAPI(MethodView):
             issue.labels = [label.strip() for label in request.form.get('labels').split(',')]
             issue.author = current_user()
             issue.project = project
+            if '%github' in issue.body:
+                url = '/repos/'+issue.project.repo+'/issues'
+                github_api = github.get_session(token=session['github_access_token'][0])
+                resp = github_api.post(url, data=json.dumps({
+                    'title': issue.title,
+                    'body': issue.body,
+                    'labels': issue.labels
+                }))
+
             issue.save()
 
             project.issues.append(issue)
@@ -89,12 +99,14 @@ def new_issue(slug):
 def close_issue(id):
     issue = Issue.objects.get_or_404(id=id)
     issue.open = False
-    event = Event(type='closed', author=current_user())
-    issue.events.append(event)
 
     if issue.github_id:
-        github.put('/repos/'+issue.project.repo+'/issues/'+str(issue.github_id), data={'state': 'closed'}, format='json')
+        url = '/repos/'+issue.project.repo+'/issues/'+str(issue.github_id)
+        github_api = github.get_session(token=session['github_access_token'][0])
+        github_api.patch(url, data=json.dumps({'state': 'closed'}))
 
+    event = Event(type='closed', author=current_user())
+    issue.events.append(event)
     issue.save()
     return jsonify({'success':True})
 
@@ -102,7 +114,13 @@ def close_issue(id):
 def open_issue(id):
     issue = Issue.objects.get_or_404(id=id)
     issue.open = True
-    event = Event(type='opened', author=current_user())
+
+    if issue.github_id:
+        url = '/repos/'+issue.project.repo+'/issues/'+str(issue.github_id)
+        github_api = github.get_session(token=session['github_access_token'][0])
+        github_api.patch(url, data=json.dumps({'state': 'open'}))
+
+    event = Event(type='reopened', author=current_user())
     issue.events.append(event)
     issue.save()
     return jsonify({'success':True})

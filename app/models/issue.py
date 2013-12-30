@@ -6,6 +6,7 @@ import datetime
 
 class Issue(db.Document):
     created_at = db.DateTimeField(default=datetime.datetime.now, required=True)
+    updated_at = db.DateTimeField(default=datetime.datetime.now, required=True)
     title = db.StringField(max_length=255, required=True, default='Issue')
     body = db.StringField(verbose_name='Issue')
     author = db.ReferenceField('User')
@@ -19,8 +20,11 @@ class Issue(db.Document):
     meta = {
             'allow_inheritance': True,
             'indexes': ['-created_at', 'author'],
-            'ordering': ['-created_at']
+            'ordering': ['-updated_at']
     }
+
+    def clean(self):
+        self.updated_at = datetime.datetime.now
 
     def ago(self):
         return ago(time=self.created_at)

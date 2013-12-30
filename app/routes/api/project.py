@@ -1,7 +1,7 @@
 from app import app
-from app.routes.oauth import current_user, requires_login, OAuthException
+from app.routes.oauth import current_user, requires_login
 from app.routes.oauth.github import github
-from flask import render_template, redirect, request, url_for, jsonify, flash
+from flask import render_template, redirect, request, url_for, jsonify, flash, session
 from flask.views import MethodView
 from app.models import Issue, Comment, User, Event, Project
 from . import register_api
@@ -26,7 +26,7 @@ class ProjectAPI(MethodView):
         # List view
         if slug is None:
             projects = Project.objects.all()
-            return render_template('project/list.html', projects=projects, current_user_id=current_user().id)
+            return render_template('project/list.html', projects=projects, current_user=current_user())
         # Detail view
         else:
             context = self.get_context(slug)
@@ -34,7 +34,8 @@ class ProjectAPI(MethodView):
             issues = Issue.objects(project=project)
             if project.repo:
                 try:
-                    gis = github.get('/repos/'+project.repo+'/issues').data
+                    github_api = github.get_session(token=session['github_access_token'][0])
+                    gis = github_api.get('/repos/'+project.repo+'/issues').json()
                     for gi in gis:
                         issue, created = Issue.objects.get_or_create(github_id=gi['number'], project=project)
                         if created:
@@ -48,7 +49,7 @@ class ProjectAPI(MethodView):
                             author = default_author
 
                         # Get comments, and update them all.
-                        gcs = github.get('/repos/'+project.repo+'/issues/'+str(gi['number'])+'/comments').data
+                        gcs = github_api.get('/repos/'+project.repo+'/issues/'+str(gi['number'])+'/comments').json()
                         for gc in gcs:
                             comment = next((c for c in issue.comments if c.github_id==gc['id']), 0)
                             if comment:
@@ -67,6 +68,26 @@ class ProjectAPI(MethodView):
                                 setattr(comment, k, v)
                             issue.comments.append(comment)
 
+                        # Get events,and update them all.
+                        ges = github_api.get('/repos/'+project.repo+'/issues/'+str(gi['number'])+'/events').json()
+                        for ge in ges:
+                            event = next((e for e in issue.events if e.github_id==ge['id']), 0)
+                            if event:
+                                issue.events.remove(event)
+                            event = Event()
+                            e_author = User.objects(github_id=ge['actor']['id']).first()
+                            if not e_author:
+                                e_author = default_author
+                            e_updates = {
+                                    'github_id': ge['id'],
+                                    'created_at': datetime.strptime(ge['created_at'], '%Y-%m-%dT%H:%M:%SZ'),
+                                    'type': ge['event'],
+                                    'author': e_author
+                            }
+                            for k,v in e_updates.iteritems():
+                                setattr(event, k, v)
+                            issue.events.append(event)
+
                         updates = {
                             'created_at': datetime.strptime(gi['created_at'], '%Y-%m-%dT%H:%M:%SZ'),
                             'title': gi['title'],
@@ -78,7 +99,7 @@ class ProjectAPI(MethodView):
                         for k,v in updates.iteritems():
                             setattr(issue, k, v)
                         issue.save()
-                except OAuthException as e:
+                except KeyError as e:
                     if current_user().github_id:
                         return redirect(url_for('github_login'))
                     else:
