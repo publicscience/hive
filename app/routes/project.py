@@ -24,7 +24,7 @@ class ProjectAPI(MethodView):
         # List view
         if slug is None:
             projects = Project.objects.all()
-            return render_template('project/list.html', projects=projects, form=form, current_user_id=current_user().id)
+            return render_template('project/list.html', projects=projects, current_user_id=current_user().id)
         # Detail view
         else:
             context = self.get_context(slug)

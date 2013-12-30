@@ -1,28 +1,33 @@
 {% extends 'layout.html' %}
 {% block content %}
 
-    <h6>Issues</h6>
+    <h6 class="title">
+        Issues
+        <ul class="list__horizontal">
+            <li><a href="{{ url_for('new_issue', slug=project.slug) }}">new</a></li>
+        </ul>
+    </h6>
     <ul>
         {% for issue in issues %}
-            <li>
-                <h6><a href="{{ url_for('issue_api', id=issue.id, slug=project.slug) }}">{{ issue.title }}</a></h6>
-                <div>{{ issue.body }}</div>
-                <div class='issue--meta'>
-                    <div>
+            <li class="issue">
+                <h4 class="title"><a href="{{ url_for('issue_api', id=issue.id, slug=project.slug) }}">{{ issue.title }}</a></h4>
+                <div class="issue--body body">{{ issue.body }}</div>
+                <ul class='issue--meta'>
+                    <li>
                         <img src="{{ issue.author.picture }}" class="thumb"> <span class="open">Opened</span> by {{ issue.author.name }}
-                    </div>
+                    </li>
                     {% if not issue.open %}
-                    <div>
+                    <li>
                         {% set last_closed_event = issue.last_closed_event() %}
                         <img src="{{ last_closed_event.author.picture }}" class="thumb"> <span class="close">Closed</span> by {{ issue.author.name }}
-                    </div>
+                    </li>
                     {% else %}
                         {% set last_opened_event = issue.last_opened_event() %}
                         {% if last_opened_event %}
                             <img src="{{ last_opened_event.author.picture }}" class="thumb"> <span class="open">Reopened</span> by {{ issue.author.name }}
                         {% endif %}
                     {% endif %}
-                </div>
+                </ul>
             </li>
         {% endfor %}
     </ul>

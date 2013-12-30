@@ -49,6 +49,9 @@ class IssueAPI(MethodView):
             issue.author = current_user()
             issue.project = project
             issue.save()
+
+            project.issues.append(issue)
+            project.save()
             return redirect(url_for('issue_api', slug=slug))
 
         return redirect(url_for('issue_api', slug=slug))

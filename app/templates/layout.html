@@ -5,14 +5,21 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <meta name="viewport" content="width=device-width,initial-scale=1">
 
-  <title>((HIVE))</title>
+  {% if project %}
+      <title>hive :: {{ project.name }}</title>
+  {% else %}
+      <title>hive</title>
+  {% endif %}
 
   <link rel="stylesheet" href="/css/index.css">
 </head>
 
 <body>
   <header class="primary--header">
-      <img src="/assets/img/hive.png">
+      <a href="/"><img src="/assets/img/hive.png"></a>
+      {% if project %}
+          <a href="{{ url_for('project_api', slug=project.slug) }}">{{ project.name }}</a>
+      {% endif %}
       <nav>
           <ul class="list__horizontal">
               <li><a href="/issues">issues</a></li>

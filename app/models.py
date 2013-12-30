@@ -130,6 +130,12 @@ class Project(db.Document):
     # Not being used yet but later there may be need for this.
     users = db.ListField(db.ReferenceField(User))
 
+    def open(self):
+        return [issue for issue in self.issues if issue.open]
+
+    def closed(self):
+        return [issue for issue in self.issues if not issue.open]
+
     @classmethod
     def pre_save(cls, sender, document, **kwargs):
         document.slug = slugify(document.name)
