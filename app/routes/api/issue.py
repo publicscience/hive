@@ -5,6 +5,7 @@ from flask.views import MethodView
 from app.models import Issue, Comment, Event, Project
 from . import register_api
 from flask.ext.mongoengine.wtf import model_form
+from app.routes.oauth.github import github
 
 class IssueAPI(MethodView):
     form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'open', 'project'])
@@ -90,6 +91,10 @@ def close_issue(id):
     issue.open = False
     event = Event(type='closed', author=current_user())
     issue.events.append(event)
+
+    if issue.github_id:
+        github.put('/repos/'+issue.project.repo+'/issues/'+str(issue.github_id), data={'state': 'closed'}, format='json')
+
     issue.save()
     return jsonify({'success':True})
 

@@ -4,6 +4,7 @@ from . import oauth
 
 google = oauth.remote_app('google',
         base_url='https://www.google.com/accounts/',
+        #base_url='https://www.google.com/oauth2/v1/',
         authorize_url='https://accounts.google.com/o/oauth2/auth',
         request_token_url=None,
         request_token_params={
@@ -30,13 +31,6 @@ def google_login():
 
 @google.tokengetter
 def get_access_token():
-    """
-    Required by flask-oauth.
-
-    Returns:
-        | (token, '') -- normally returns (token, secret), but Google
-        only has token.
-    """
     return session.get('google_access_token')
 
 # After authentication.

@@ -11,7 +11,7 @@
         {% for issue in issues %}
             <li class="issue">
                 <h4 class="title"><a href="{{ url_for('issue_api', id=issue.id, slug=project.slug) }}">{{ issue.title }}</a></h4>
-                <div class="issue--body body">{{ issue.body }}</div>
+                <div class="issue--body body">{{ issue.parsed()|safe }}</div>
                 <ul class='issue--meta'>
                     <li>
                         <img src="{{ issue.author.picture }}" class="thumb"> <span class="open">Opened</span> by {{ issue.author.name }}

@@ -3,7 +3,7 @@
 
     <section class="issue--detail">
         <h4>{{ issue.title }}</h4>
-        <div class="issue--body body">{{ issue.body }}</div>
+        <div class="issue--body body">{{ issue.parsed()|safe }}</div>
         <ul class='issue--meta'>
             {% if issue.labels %}
                 <li>
@@ -75,7 +75,7 @@
             {{ form.csrf_token }} 
             {{ form.body(class="mention-target") }}
             <div>
-                <textarea autofocus class="mention"></textarea>
+                <textarea class="mention"></textarea>
             </div>
             <div class="actions">
                 <input type="submit" class="open" value="Comment">
