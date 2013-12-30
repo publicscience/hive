@@ -1,7 +1,6 @@
 .DS_Store
 *.pyc
 .gitkeep
-index.css
 *.swp
 app/static/js/vendor/bower/**/*
 config.json
@@ -9,7 +8,6 @@ config.json
 node_modules/
 app/static/fontcustom/*
 config.py
-!app/config.py
-markov.pickle
-classifier.pickle
+!app/static/js/vendor/bower/requirejs/require.js
+!app/static/js/vendor/bower/underscore/underscore-min.js
 log.log
