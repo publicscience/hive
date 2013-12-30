@@ -35,7 +35,9 @@ class Project(db.Document):
 
     def sync(self):
         if self.linked():
-            gis = github.api().get('/repos/'+self.repo+'/issues').json() + github.api().get('/repos/'+self.repo+'/issues', params={'state': 'closed'}).json()
+            # Sync on behalf of the project author.
+            token = self.author.github_access
+            gis = github.api(token=token).get('/repos/'+self.repo+'/issues').json() + github.api(token=token).get('/repos/'+self.repo+'/issues', params={'state': 'closed'}).json()
             for gi in gis:
                 i, created = issue.Issue.objects.get_or_create(github_id=gi['number'], project=self)
                 if created:
@@ -43,7 +45,7 @@ class Project(db.Document):
                 i.sync(data=gi)
 
     def linked(self):
-        return bool(self.repo)
+        return bool(self.repo and self.author.linked())
 
     @classmethod
     def pre_delete(cls, sender, document, **kwargs):

@@ -9,6 +9,7 @@ class User(db.Document):
     picture = db.URLField()
     google_id = db.StringField(required=True, unique=True)
     github_id = db.IntField() # note: setting unique=True automatically sets required=True
+    github_access = db.StringField()
 
     def linked(self):
         return bool(self.github_id)

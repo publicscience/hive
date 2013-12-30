@@ -45,11 +45,12 @@ class Issue(db.Document):
             return '/repos/'+self.project.repo+'/issues/'+str(self.github_id)+end
 
     def sync(self, data=None):
-        if self.linked():
+        if self.linked() and self.project.linked():
             default_author = user.User.default()
+            token = self.author.github_access
 
             if data is None:
-                data = github.api().get(self.linked_url()).json()
+                data = github.api(token=token).get(self.linked_url()).json()
 
             open = True if data['state'] == 'open' else False
             labels = [label['name'] for label in data['labels']]
@@ -71,7 +72,7 @@ class Issue(db.Document):
 
 
             # Get comments, and update them all.
-            gcs = github.api().get(self.linked_url(end='/comments')).json()
+            gcs = github.api(token=token).get(self.linked_url(end='/comments')).json()
             for gc in gcs:
                 # Clean up redundant/outdated comment.
                 c = next((c_ for c_ in self.comments if c_.github_id==gc['id']), 0)
@@ -96,7 +97,7 @@ class Issue(db.Document):
                 self.comments.append(c)
 
             # Get events,and update them all.
-            ges = github.api().get(self.linked_url(end='/events')).json()
+            ges = github.api(token=token).get(self.linked_url(end='/events')).json()
             for ge in ges:
                 # Clean up redundant/outdated event.
                 e = next((e_ for e_ in self.events if e_.github_id==ge['id']), 0)

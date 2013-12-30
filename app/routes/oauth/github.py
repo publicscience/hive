@@ -49,10 +49,13 @@ def github_authorized():
     from app.models.user import current_user
     current_user = current_user()
     current_user.github_id = session_.get('/user').json()['id']
+    current_user.github_access = session_.access_token
     current_user.save()
 
     # Redirect
     return redirect('/')
 
-def api():
-    return github.get_session(token=session['github_access_token'])
+def api(token=None):
+    if token is None:
+        token = session['github_access_token']
+    return github.get_session(token=token)
