@@ -7,23 +7,26 @@ from app.models import Issue, Comment, Event, Project
 from . import register_api
 from flask.ext.mongoengine.wtf import model_form
 
-class IssueAPI(MethodView):
-    form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'open', 'project', 'github_id'])
-    comment_form = model_form(Comment, exclude=['created_at', 'author'])
+issue_form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'project', 'open', 'github_id'])
 
-    def get_context(self, id):
-        issue = Issue.objects.get_or_404(id=id)
-        form = self.form(request.form)
+class IssueAPI(MethodView):
+
+    def get_context(self, slug=None, id=None):
+        issue = Issue.objects.get_or_404(id=id) if id else None
+        project = Project.objects.get_or_404(slug=slug) if slug else None
+        form = issue_form(request.form)
 
         context = {
                 'issue': issue,
+                'project': project,
                 'form': form
         }
         return context
 
     @requires_login
     def get(self, slug, id):
-        project = Project.objects.get_or_404(slug=slug)
+        ctx = self.get_context(slug=slug, id=id)
+        project = ctx['project']
 
         # List view
         if id is None:
@@ -31,24 +34,28 @@ class IssueAPI(MethodView):
             return render_template('issue/list.html', issues=issues, project=project)
         # Detail view
         else:
-            comment_form = self.comment_form(request.form)
-            context = self.get_context(id)
-            issue = context['issue']
-            issue.sync()
+            comment_form = model_form(Comment, exclude=['created_at', 'author'])
+            form = comment_form(request.form)
 
+            issue = ctx['issue']
+            issue.sync()
             all_events = issue.all_events()
-            return render_template('issue/detail.html', issue=issue, events=all_events, form=comment_form, current_user=current_user(), project=project)
+
+            return render_template('issue/detail.html', issue=issue, events=all_events, form=form, current_user=current_user(), project=project)
 
     @requires_login
     def post(self, slug):
-        form = self.form(request.form)
+        ctx = self.get_context(slug=slug)
+        form = ctx['form']
 
         if form.validate():
-            project = Project.objects.get_or_404(slug=slug)
+            project = ctx['project']
+
             issue = Issue()
             form.populate_obj(issue)
             issue.project = project
             issue.process(request.form)
+
             project.issues.append(issue)
             project.save()
             return redirect(url_for('issue_api', slug=slug))
@@ -57,22 +64,21 @@ class IssueAPI(MethodView):
 
     @requires_login
     def put(self, slug, id):
-        context = self.get_context(id)
-        issue = context['issue']
-        form = self.form(request.form)
+        ctx = self.get_context(id=id)
+        issue = ctx['issue']
+        form = ctx['form']
 
         if form.validate():
             form.populate_obj(issue)
-            issue.save()
+            issue.process(request.form)
             return redirect(url_for('issue_api', slug=slug, id=issue.id))
 
         return redirect(url_for('issue_api', slug=slug, id=issue.id))
 
-
     @requires_login
     def delete(self, slug, id):
-        context = self.get_context(id)
-        issue = context.get('issue')
+        ctx = self.get_context(id=id)
+        issue = ctx['issue']
         issue.delete()
         return jsonify({'success':True})
 
@@ -81,21 +87,20 @@ register_api(IssueAPI, 'issue_api', '/<string:slug>/issues/', id='id', id_type='
 @app.route('/<string:slug>/issues/new')
 @requires_login
 def new_issue(slug):
-    form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'project', 'open', 'github_id'])
-    return render_template('issue/new.html', form=form(request.form))
+    return render_template('issue/new.html', form=issue_form(request.form))
 
 # Not "proper" but lack of HTTP method support in browsers sucks.
+# Emulate PUT by accepting POST at this endpoint.
 @app.route('/<string:slug>/issues/<string:id>/edit', methods=['GET', 'POST'])
 @requires_login
 def edit_issue(slug, id):
     issue = Issue.objects.get_or_404(id=id)
-    form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'project', 'open', 'github_id'])
     if request.method == 'GET':
-        return render_template('issue/edit.html', form=form(request.form, obj=issue), issue=issue, project=issue.project)
+        return render_template('issue/edit.html', form=issue_form(request.form, obj=issue), issue=issue, project=issue.project)
     else:
-        form_ = form(request.form)
-        if form_.validate():
-            form_.populate_obj(issue)
+        form = issue_form(request.form)
+        if form.validate():
+            form.populate_obj(issue)
             issue.process(request.form)
         return redirect(url_for('edit_issue', slug=slug, id=id, _method='GET'))
 

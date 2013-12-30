@@ -11,6 +11,7 @@ class User(db.Document):
     github_id = db.IntField() # note: setting unique=True automatically sets required=True
     github_access = db.StringField()
 
+    # Linked to Github or not.
     def linked(self):
         return bool(self.github_id)
 

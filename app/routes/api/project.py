@@ -8,12 +8,12 @@ from . import register_api
 from flask.ext.mongoengine.wtf import model_form
 from datetime import datetime
 
-class ProjectAPI(MethodView):
-    form = model_form(Project, exclude=['created_at', 'users', 'issues', 'slug', 'author'])
+project_form = model_form(Project, exclude=['created_at', 'users', 'issues', 'slug', 'author'])
 
-    def get_context(self, slug):
-        project = Project.objects.get_or_404(slug=slug)
-        form = self.form(request.form)
+class ProjectAPI(MethodView):
+    def get_context(self, slug=None):
+        project = Project.objects.get_or_404(slug=slug) if slug else None
+        form = project_form(request.form)
 
         context = {
                 'project': project,
@@ -29,8 +29,8 @@ class ProjectAPI(MethodView):
             return render_template('project/list.html', projects=projects, current_user=current_user())
         # Detail view
         else:
-            context = self.get_context(slug)
-            project = context['project']
+            ctx = self.get_context(slug=slug)
+            project = ctx['project']
             try:
                 project.sync()
             except KeyError as e:
@@ -44,7 +44,8 @@ class ProjectAPI(MethodView):
 
     @requires_login
     def post(self):
-        form = self.form(request.form)
+        ctx = self.get_context()
+        form = ctx['form']
 
         if form.validate():
             project = Project()
@@ -58,9 +59,9 @@ class ProjectAPI(MethodView):
 
     @requires_login
     def put(self, slug):
-        context = self.get_context(slug)
-        project = context['project']
-        form = self.form(request.form)
+        ctx = self.get_context(slug=slug)
+        project = ctx['project']
+        form = ctx['form']
 
         if form.validate():
             form.populate_obj(project)
@@ -71,8 +72,8 @@ class ProjectAPI(MethodView):
 
     @requires_login
     def delete(self, slug):
-        context = self.get_context(slug)
-        project = context.get('project')
+        ctx = self.get_context(slug=slug)
+        project = ctx['project']
         project.delete()
 
         return jsonify({'success':True})
@@ -83,5 +84,4 @@ register_api(ProjectAPI, 'project_api', '/', id='slug', id_type='string')
 @app.route('/new')
 @requires_login
 def new_project():
-    form = model_form(Project, exclude=['created_at', 'users', 'issues', 'slug', 'author'])
-    return render_template('project/new.html', form=form(request.form))
+    return render_template('project/new.html', form=project_form(request.form))

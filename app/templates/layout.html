@@ -21,7 +21,7 @@
           <a href="{{ url_for('project_api', slug=project.slug) }}">{{ project.name }}</a>
           <nav>
               <ul class="list__horizontal">
-                  <li><a href="{{ url_for('open_issues', slug=project.slug) }}">open</a></li>
+                  <li><a href="{{ url_for('project_api', slug=project.slug) }}">open</a></li>
                   <li><a href="{{ url_for('closed_issues', slug=project.slug) }}">closed</a></li>
               </ul>
           </nav>

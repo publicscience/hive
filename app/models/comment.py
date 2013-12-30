@@ -12,12 +12,14 @@ class Comment(db.EmbeddedDocument):
     author = db.ReferenceField('User')
     github_id = db.IntField()
 
+    # Called prior to saving.
     def clean(self):
         self.updated_at = datetime.utcnow()
 
     def ago(self):
         return ago(time=self.created_at)
 
+    # GitHub flavorted Markdown & mention parsing.
     def parsed(self):
         parsed = self.body
         parsed = parse_mentions(parsed)

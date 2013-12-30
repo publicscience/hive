@@ -22,14 +22,15 @@ class Issue(db.Document):
     meta = {
             'allow_inheritance': True,
             'indexes': ['-created_at', 'author'],
-            'ordering': ['-updated_at']
+            'ordering': ['updated_at']
     }
 
+    # Called prior to saving.
     def clean(self):
         self.updated_at = datetime.utcnow()
 
+    # Handle some additional processing.
     def process(self, data):
-        # Handle some additional processing.
         self.labels = [label.strip() for label in data.get('labels').split(',') if label]
         self.author = user.current_user()
 
@@ -59,10 +60,14 @@ class Issue(db.Document):
 
         self.save()
 
+    # Corresponding GitHub endpoint for this issue.
     def linked_url(self, end=''):
         if self.linked():
             return '/repos/'+self.project.repo+'/issues/'+str(self.github_id)+end
 
+    # Sync this issue with its GitHub correlate (if it exists).
+    # Syncing is on behalf of the issue's project's author.
+    # Optionally pass in data to update with.
     def sync(self, data=None):
         if self.linked() and self.project.linked():
             default_author = user.User.default()
@@ -71,6 +76,7 @@ class Issue(db.Document):
             if data is None:
                 data = github.api(token=token).get(self.linked_url()).json()
 
+            # Process data and apply it to the issue.
             open = True if data['state'] == 'open' else False
             labels = [label['name'] for label in data['labels']]
             author = user.User.objects(github_id=data['user']['id']).first()
@@ -141,6 +147,7 @@ class Issue(db.Document):
                 self.events.append(e)
             self.save()
 
+    # Close the issue.
     def close(self):
         self.open = False
         if self.linked():
@@ -149,6 +156,7 @@ class Issue(db.Document):
         self.events.append(e)
         self.save()
 
+    # Reopen the issue.
     def reopen(self):
         self.open = True
         if self.linked():
@@ -157,12 +165,11 @@ class Issue(db.Document):
         self.events.append(e)
         self.save()
 
+    # Linked to Github or not.
     def linked(self):
-        """
-        Linked to Github or not.
-        """
         return bool(self.github_id)
 
+    # All events, i.e. events and comments.
     def all_events(self):
         all_events = self.events + self.comments
         all_events.sort(key=lambda i:i.created_at)
@@ -171,14 +178,17 @@ class Issue(db.Document):
     def ago(self):
         return ago(time=self.created_at)
 
+    # GitHub flavorted Markdown & mention parsing.
     def parsed(self):
         parsed = self.body
         parsed = parse_mentions(parsed)
         return markdown(parsed)
 
+    # Most recent closed event.
     def last_closed_event(self):
         return next((e for e in reversed(self.events) if e.type=='closed'), None)
 
+    # Most recent (re)opened event.
     def last_opened_event(self):
         return next((e for e in reversed(self.events) if e.type=='opened'), None)
 

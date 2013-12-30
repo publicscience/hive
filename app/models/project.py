@@ -20,9 +20,10 @@ class Project(db.Document):
     meta = {
             'allow_inheritance': True,
             'indexes': ['-created_at'],
-            'ordering': ['-updated_at']
+            'ordering': ['updated_at']
     }
 
+    # Called prior to saving.
     def clean(self):
         self.slug = slugify(self.name)
         self.updated_at = datetime.utcnow()
@@ -33,18 +34,20 @@ class Project(db.Document):
     def closed(self):
         return [issue for issue in self.issues if not issue.open]
 
+    # Sync this project with its GitHub correlate (if it exists).
+    # Syncs on behalf of the project author.
     def sync(self):
         if self.linked():
-            # Sync on behalf of the project author.
             token = self.author.github_access
-            gis = github.api(token=token).get('/repos/'+self.repo+'/issues').json() + github.api(token=token).get('/repos/'+self.repo+'/issues', params={'state': 'closed'}).json()
-            for gi in gis:
+            github_issues = github.api(token=token).get('/repos/'+self.repo+'/issues').json() + github.api(token=token).get('/repos/'+self.repo+'/issues', params={'state': 'closed'}).json()
+            for gi in github_issues:
                 i, created = issue.Issue.objects.get_or_create(github_id=gi['number'], project=self)
                 if created:
                     self.issues.append(i)
                 i.sync(data=gi)
             self.save()
 
+    # Linked to Github or not.
     def linked(self):
         return bool(self.repo and self.author.linked())
 
