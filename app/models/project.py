@@ -43,6 +43,7 @@ class Project(db.Document):
                 if created:
                     self.issues.append(i)
                 i.sync(data=gi)
+            self.save()
 
     def linked(self):
         return bool(self.repo and self.author.linked())

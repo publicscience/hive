@@ -42,6 +42,7 @@ class ProjectAPI(MethodView):
 
             return render_template('issue/list.html', issues=issues, project=project)
 
+    @requires_login
     def post(self):
         form = self.form(request.form)
 
@@ -55,6 +56,7 @@ class ProjectAPI(MethodView):
 
         return redirect(url_for('project_api'))
 
+    @requires_login
     def put(self, slug):
         context = self.get_context(slug)
         project = context['project']
@@ -67,7 +69,7 @@ class ProjectAPI(MethodView):
 
         return redirect(url_for('project_api', slug=project.slug))
 
-
+    @requires_login
     def delete(self, slug):
         context = self.get_context(slug)
         project = context.get('project')

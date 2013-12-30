@@ -3,8 +3,6 @@ from flask import redirect, url_for, session
 from app.routes.auth import requires_auth
 from functools import wraps
 
-from . import google, github
-
 @app.route('/logout')
 def logout():
     """
@@ -35,3 +33,5 @@ def requires_github(f):
             return redirect(url_for('github_login'))
         return f(*args, **kwargs)
     return decorated
+
+from . import google, github

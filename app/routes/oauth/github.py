@@ -1,4 +1,5 @@
 from app import app
+from . import requires_login
 from flask import redirect, url_for, flash, session, render_template, request
 from rauth.service import OAuth2Service
 
@@ -12,6 +13,7 @@ github = OAuth2Service(
 )
 
 @app.route('/github_login')
+@requires_login
 def github_login():
     """
     Authenticate with Github.
@@ -20,6 +22,7 @@ def github_login():
     return redirect(github.get_authorize_url(redirect_uri=redirect_uri, scope='user,repo'))
 
 @app.route('/github')
+@requires_login
 def github_info():
     """
     Provide some info about linking

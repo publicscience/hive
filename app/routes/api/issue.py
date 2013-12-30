@@ -40,6 +40,7 @@ class IssueAPI(MethodView):
             all_events.sort(key=lambda i:i.created_at)
             return render_template('issue/detail.html', issue=issue, events=all_events, form=comment_form, current_user=current_user(), project=project)
 
+    @requires_login
     def post(self, slug):
         form = self.form(request.form)
 
@@ -56,6 +57,7 @@ class IssueAPI(MethodView):
 
         return redirect(url_for('issue_api', slug=slug))
 
+    @requires_login
     def put(self, slug, id):
         context = self.get_context(id)
         issue = context['issue']
@@ -69,6 +71,7 @@ class IssueAPI(MethodView):
         return redirect(url_for('issue_api', slug=slug, id=issue.id))
 
 
+    @requires_login
     def delete(self, slug, id):
         context = self.get_context(id)
         issue = context.get('issue')
@@ -101,18 +104,21 @@ def edit_issue(slug, id):
         return redirect(url_for('edit_issue', slug=slug, id=id, _method='GET'))
 
 @app.route('/issues/<string:id>/close', methods=['PUT'])
+@requires_login
 def close_issue(id):
     issue = Issue.objects.get_or_404(id=id)
     issue.close()
     return jsonify({'success':True})
 
 @app.route('/issues/<string:id>/open', methods=['PUT'])
+@requires_login
 def open_issue(id):
     issue = Issue.objects.get_or_404(id=id)
     issue.reopen()
     return jsonify({'success':True})
 
 @app.route('/<string:slug>/closed')
+@requires_login
 def closed_issues(slug):
     #issues = Issue.objects(open=False)
     project = Project.objects.get_or_404(slug=slug)
@@ -120,6 +126,7 @@ def closed_issues(slug):
     return render_template('issue/list.html', issues=issues, project=project)
 
 @app.route('/<string:slug>/open')
+@requires_login
 def open_issues(slug):
     #issues = Issue.objects(open=True)
     project = Project.objects.get_or_404(slug=slug)
@@ -127,6 +134,7 @@ def open_issues(slug):
     return render_template('issue/list.html', issues=issues, project=project)
 
 @app.route('/<string:slug>/label/<string:label>')
+@requires_login
 def label_issues(slug, label):
     project = Project.objects.get_or_404(slug=slug)
     issues = Issue.objects(labels=label, project=project)
