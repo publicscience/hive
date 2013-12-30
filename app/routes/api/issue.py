@@ -112,21 +112,21 @@ def open_issue(id):
     issue.reopen()
     return jsonify({'success':True})
 
-@app.route('/<string:slug>/issues/closed')
+@app.route('/<string:slug>/closed')
 def closed_issues(slug):
     #issues = Issue.objects(open=False)
     project = Project.objects.get_or_404(slug=slug)
     issues = Issue.objects(open=False, project=project)
     return render_template('issue/list.html', issues=issues, project=project)
 
-@app.route('/<string:slug>/issues/open')
+@app.route('/<string:slug>/open')
 def open_issues(slug):
     #issues = Issue.objects(open=True)
     project = Project.objects.get_or_404(slug=slug)
     issues = Issue.objects(open=True, project=project)
     return render_template('issue/list.html', issues=issues, project=project)
 
-@app.route('/<string:slug>/issues/label/<string:label>')
+@app.route('/<string:slug>/label/<string:label>')
 def label_issues(slug, label):
     project = Project.objects.get_or_404(slug=slug)
     issues = Issue.objects(labels=label, project=project)

@@ -7,8 +7,8 @@ from datetime import datetime
 import json
 
 class Issue(db.Document):
-    created_at = db.DateTimeField(default=datetime.now, required=True)
-    updated_at = db.DateTimeField(default=datetime.now, required=True)
+    created_at = db.DateTimeField(default=datetime.utcnow(), required=True)
+    updated_at = db.DateTimeField(default=datetime.utcnow(), required=True)
     title = db.StringField(max_length=255, required=True, default='Issue')
     body = db.StringField(verbose_name='Issue')
     author = db.ReferenceField('User')
@@ -26,7 +26,7 @@ class Issue(db.Document):
     }
 
     def clean(self):
-        self.updated_at = datetime.now
+        self.updated_at = datetime.utcnow()
 
     def process(self, data):
         self.labels = [label.strip() for label in data.get('labels').split(',')]

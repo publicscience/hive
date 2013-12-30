@@ -6,8 +6,8 @@ from datetime import datetime
 from . import issue
 
 class Project(db.Document):
-    created_at = db.DateTimeField(default=datetime.now, required=True)
-    updated_at = db.DateTimeField(default=datetime.now, required=True)
+    created_at = db.DateTimeField(default=datetime.utcnow(), required=True)
+    updated_at = db.DateTimeField(default=datetime.utcnow(), required=True)
     name = db.StringField(max_length=255, required=True, unique=True)
     repo = db.StringField(max_length=255)
     slug = db.StringField(max_length=255)
@@ -25,7 +25,7 @@ class Project(db.Document):
 
     def clean(self):
         self.slug = slugify(self.name)
-        self.updated_at = datetime.now
+        self.updated_at = datetime.utcnow()
 
     def open(self):
         return [issue for issue in self.issues if issue.open]

@@ -4,7 +4,7 @@ import datetime
 from app.routes.oauth import google
 
 class User(db.Document):
-    created_at = db.DateTimeField(default=datetime.datetime.now, required=True)
+    created_at = db.DateTimeField(default=datetime.datetime.utcnow(), required=True)
     name = db.StringField(max_length=255)
     picture = db.URLField()
     google_id = db.StringField(required=True, unique=True)

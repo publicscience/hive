@@ -20,7 +20,7 @@ def ago(time=False):
     From: http://stackoverflow.com/a/1551394
     """
     from datetime import datetime
-    now = datetime.now()
+    now = datetime.utcnow()
     if type(time) is int:
         diff = now - datetime.fromtimestamp(time)
     elif isinstance(time,datetime):
