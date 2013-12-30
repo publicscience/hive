@@ -10,7 +10,14 @@
     <ul class="list__horizontal__justify">
         {% for issue in issues %}
             <li class="issue">
-                <h4 class="title"><a href="{{ url_for('issue_api', id=issue.id, slug=project.slug) }}">{{ issue.title }}</a></h4>
+                <h4 class="title">
+                    <a href="{{ url_for('issue_api', id=issue.id, slug=project.slug) }}">{{ issue.title }}</a>
+                    {% if issue.github_id %}
+                    <ul class="list__horizontal">
+                        <li class="issue--id">#{{issue.github_id}}</li>
+                    </ul>
+                    {% endif %}
+                </h4>
                 <div class="issue--body body">{{ issue.parsed()|safe }}</div>
                 <ul class='issue--meta'>
                     <li>

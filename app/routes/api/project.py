@@ -31,7 +31,6 @@ class ProjectAPI(MethodView):
         else:
             context = self.get_context(slug)
             project = context['project']
-            issues = Issue.objects(project=project)
             try:
                 project.sync()
             except KeyError as e:
@@ -39,6 +38,7 @@ class ProjectAPI(MethodView):
                     return redirect(url_for('github_login'))
                 else:
                     return redirect(url_for('github_info'))
+            issues = Issue.objects(project=project, open=True)
 
             return render_template('issue/list.html', issues=issues, project=project)
 
