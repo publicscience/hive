@@ -8,7 +8,7 @@ from . import register_api
 from flask.ext.mongoengine.wtf import model_form
 
 class IssueAPI(MethodView):
-    form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'open', 'project'])
+    form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'open', 'project', 'github_id'])
     comment_form = model_form(Comment, exclude=['created_at', 'author'])
 
     def get_context(self, id):
@@ -36,8 +36,7 @@ class IssueAPI(MethodView):
             issue = context['issue']
             issue.sync()
 
-            all_events = issue.events + issue.comments
-            all_events.sort(key=lambda i:i.created_at)
+            all_events = issue.all_events()
             return render_template('issue/detail.html', issue=issue, events=all_events, form=comment_form, current_user=current_user(), project=project)
 
     @requires_login
@@ -50,7 +49,6 @@ class IssueAPI(MethodView):
             form.populate_obj(issue)
             issue.project = project
             issue.process(request.form)
-            issue.save()
             project.issues.append(issue)
             project.save()
             return redirect(url_for('issue_api', slug=slug))
@@ -76,7 +74,6 @@ class IssueAPI(MethodView):
         context = self.get_context(id)
         issue = context.get('issue')
         issue.delete()
-
         return jsonify({'success':True})
 
 register_api(IssueAPI, 'issue_api', '/<string:slug>/issues/', id='id', id_type='string')
@@ -84,7 +81,7 @@ register_api(IssueAPI, 'issue_api', '/<string:slug>/issues/', id='id', id_type='
 @app.route('/<string:slug>/issues/new')
 @requires_login
 def new_issue(slug):
-    form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'project'])
+    form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'project', 'open', 'github_id'])
     return render_template('issue/new.html', form=form(request.form))
 
 # Not "proper" but lack of HTTP method support in browsers sucks.
@@ -92,7 +89,7 @@ def new_issue(slug):
 @requires_login
 def edit_issue(slug, id):
     issue = Issue.objects.get_or_404(id=id)
-    form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'project', 'open'])
+    form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'project', 'open', 'github_id'])
     if request.method == 'GET':
         return render_template('issue/edit.html', form=form(request.form, obj=issue), issue=issue, project=issue.project)
     else:
@@ -100,7 +97,6 @@ def edit_issue(slug, id):
         if form_.validate():
             form_.populate_obj(issue)
             issue.process(request.form)
-            issue.save()
         return redirect(url_for('edit_issue', slug=slug, id=id, _method='GET'))
 
 @app.route('/issues/<string:id>/close', methods=['PUT'])
@@ -120,7 +116,6 @@ def open_issue(id):
 @app.route('/<string:slug>/closed')
 @requires_login
 def closed_issues(slug):
-    #issues = Issue.objects(open=False)
     project = Project.objects.get_or_404(slug=slug)
     issues = Issue.objects(open=False, project=project)
     return render_template('issue/list.html', issues=issues, project=project)
@@ -128,7 +123,6 @@ def closed_issues(slug):
 @app.route('/<string:slug>/open')
 @requires_login
 def open_issues(slug):
-    #issues = Issue.objects(open=True)
     project = Project.objects.get_or_404(slug=slug)
     issues = Issue.objects(open=True, project=project)
     return render_template('issue/list.html', issues=issues, project=project)

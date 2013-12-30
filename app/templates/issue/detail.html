@@ -2,7 +2,14 @@
 {% block content %}
 
     <section class="issue--detail">
-        <h4>{{ issue.title }}</h4>
+        <h4 class="title">
+            {{ issue.title }}
+            {% if issue.github_id %}
+            <ul class="list__horizontal">
+                <li class="issue--id">#{{issue.github_id}}</li>
+            </ul>
+            {% endif %}
+        </h4>
         <div class="issue--body body">
             {% if issue.author.id == current_user.id %}
                 {{ issue.parsed()|safe }}

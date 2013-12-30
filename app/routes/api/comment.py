@@ -19,10 +19,15 @@ class CommentAPI(MethodView):
             comment = Comment()
             form.populate_obj(comment)
             comment.author = current_user()
-            if issue.github_id:
-                url = '/repos/' + issue.project.repo + '/issues/' + str(issue.github_id) + '/comments'
-                resp = github.api().post(url, data=json.dumps({'body':comment.body}))
-                comment.github_id = resp.json()['id']
+
+            if issue.linked():
+                # Create comment on GitHub
+                try:
+                    url = '/repos/' + issue.project.repo + '/issues/' + str(issue.github_id) + '/comments'
+                    resp = github.api().post(url, data=json.dumps({'body':comment.body}))
+                    comment.github_id = resp.json()['id']
+                except KeyError as e:
+                    return redirect(url_for('github_login', _method='GET'))
 
             issue.comments.append(comment)
             issue.save()

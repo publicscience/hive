@@ -29,16 +29,35 @@ class Issue(db.Document):
         self.updated_at = datetime.utcnow()
 
     def process(self, data):
-        self.labels = [label.strip() for label in data.get('labels').split(',')]
+        # Handle some additional processing.
+        self.labels = [label.strip() for label in data.get('labels').split(',') if label]
         self.author = user.current_user()
 
-        if '%github' in self.body:
+        # Update corresponding GitHub issue.
+        if self.github_id:
+            url = self.linked_url()
+            resp = github.api().patch(url, data=json.dumps({
+                'title': self.title,
+                'body': self.body,
+                'labels': self.labels
+            }))
+            if resp.status_code != 200:
+                raise Exception()
+
+        # Create issue on GitHub if flag is present.
+        elif '%github' in self.body:
             url = '/repos/'+self.project.repo+'/issues'
             resp = github.api().post(url, data=json.dumps({
                 'title': self.title,
                 'body': self.body,
                 'labels': self.labels
             }))
+            if resp.status_code != 201:
+                raise Exception()
+
+            self.github_id = resp.json()['number']
+
+        self.save()
 
     def linked_url(self, end=''):
         if self.linked():
@@ -143,6 +162,11 @@ class Issue(db.Document):
         Linked to Github or not.
         """
         return bool(self.github_id)
+
+    def all_events(self):
+        all_events = self.events + self.comments
+        all_events.sort(key=lambda i:i.created_at)
+        return all_events
 
     def ago(self):
         return ago(time=self.created_at)
