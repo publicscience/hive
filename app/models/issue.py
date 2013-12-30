@@ -113,7 +113,8 @@ class Issue(db.Document):
                         'github_id': ge['id'],
                         'created_at': datetime.strptime(ge['created_at'], '%Y-%m-%dT%H:%M:%SZ'),
                         'type': ge['event'],
-                        'author': e_author
+                        'author': e_author,
+                        'commit_id': ge['commit_id']
                 }
                 for k,v in e_updates.iteritems():
                     setattr(e, k, v)
