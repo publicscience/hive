@@ -7,7 +7,7 @@
             <li><a href="{{ url_for('new_issue', slug=project.slug) }}">new</a></li>
         </ul>
     </h6>
-    <ul>
+    <ul class="list__horizontal__justify">
         {% for issue in issues %}
             <li class="issue">
                 <h4 class="title"><a href="{{ url_for('issue_api', id=issue.id, slug=project.slug) }}">{{ issue.title }}</a></h4>

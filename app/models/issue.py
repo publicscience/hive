@@ -47,7 +47,7 @@ class Issue(db.Document):
     def sync(self, data=None):
         if self.linked() and self.project.linked():
             default_author = user.User.default()
-            token = self.author.github_access
+            token = self.project.author.github_access
 
             if data is None:
                 data = github.api(token=token).get(self.linked_url()).json()

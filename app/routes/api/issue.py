@@ -91,7 +91,7 @@ def edit_issue(slug, id):
     issue = Issue.objects.get_or_404(id=id)
     form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'project', 'open'])
     if request.method == 'GET':
-        return render_template('issue/edit.html', form=form(request.form, obj=issue), issue=issue)
+        return render_template('issue/edit.html', form=form(request.form, obj=issue), issue=issue, project=issue.project)
     else:
         form_ = form(request.form)
         if form_.validate():

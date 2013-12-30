@@ -19,12 +19,13 @@
       <a href="/"><img src="/assets/img/hive.png"></a>
       {% if project %}
           <a href="{{ url_for('project_api', slug=project.slug) }}">{{ project.name }}</a>
+          <nav>
+              <ul class="list__horizontal">
+                  <li><a href="{{ url_for('open_issues', slug=project.slug) }}">open</a></li>
+                  <li><a href="{{ url_for('closed_issues', slug=project.slug) }}">closed</a></li>
+              </ul>
+          </nav>
       {% endif %}
-      <nav>
-          <ul class="list__horizontal">
-              <li><a href="/issues">issues</a></li>
-          </ul>
-      </nav>
   </header>
   <main role="main" id="main">
         {% with messages = get_flashed_messages() %}
