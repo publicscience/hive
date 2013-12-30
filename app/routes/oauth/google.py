@@ -44,3 +44,6 @@ def google_authorized():
 
     # Redirect
     return redirect('/')
+
+def api():
+    return google.get_session(token=session['google_access_token'])

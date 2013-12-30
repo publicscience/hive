@@ -1,5 +1,4 @@
 from app import app
-from app.models import User
 from flask import redirect, url_for, flash, session, render_template, request
 from rauth.service import OAuth2Service
 
@@ -45,11 +44,15 @@ def github_authorized():
     session_ = github.get_auth_session(data=data)
 
     # Store access token in session.
-    session['github_access_token'] = session_.access_token, ''
+    session['github_access_token'] = session_.access_token
 
-    current_user = User.objects(google_id=session['user_id']).first()
+    from app.models.user import current_user
+    current_user = current_user()
     current_user.github_id = session_.get('/user').json()['id']
     current_user.save()
 
     # Redirect
     return redirect('/')
+
+def api():
+    return github.get_session(token=session['github_access_token'])

@@ -1,10 +1,10 @@
 from app import app
-from app.routes.oauth import current_user, requires_login
-from flask import redirect, request, url_for, jsonify, flash, session
+from app.routes.oauth import requires_login, github
+from app.models.user import current_user
+from flask import redirect, request, url_for, jsonify, flash
 from flask.views import MethodView
 from app.models import Issue, Comment
 from flask.ext.mongoengine.wtf import model_form
-from app.routes.oauth.github import github
 import json
 
 class CommentAPI(MethodView):
@@ -20,9 +20,8 @@ class CommentAPI(MethodView):
             form.populate_obj(comment)
             comment.author = current_user()
             if issue.github_id:
-                github_api = github.get_session(token=session['github_access_token'][0])
                 url = '/repos/' + issue.project.repo + '/issues/' + str(issue.github_id) + '/comments'
-                resp = github_api.post(url, data=json.dumps({'body':comment.body}))
+                resp = github.api().post(url, data=json.dumps({'body':comment.body}))
                 comment.github_id = resp.json()['id']
 
             issue.comments.append(comment)
