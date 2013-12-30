@@ -35,11 +35,11 @@ class Project(db.Document):
 
     def sync(self):
         if self.linked():
-            gis = github.api().get('/repos/'+self.repo+'/issues').json()
+            gis = github.api().get('/repos/'+self.repo+'/issues').json() + github.api().get('/repos/'+self.repo+'/issues', params={'state': 'closed'}).json()
             for gi in gis:
                 i, created = issue.Issue.objects.get_or_create(github_id=gi['number'], project=self)
                 if created:
-                    elfroject.issues.append(i)
+                    self.issues.append(i)
                 i.sync(data=gi)
 
     def linked(self):

@@ -30,14 +30,14 @@ class Issue(db.Document):
 
     def process(self, data):
         self.labels = [label.strip() for label in data.get('labels').split(',')]
-        self.author = current_user()
+        self.author = user.current_user()
 
-        if '%github' in issue.body:
-            url = '/repos/'+issue.project.repo+'/issues'
+        if '%github' in self.body:
+            url = '/repos/'+self.project.repo+'/issues'
             resp = github.api().post(url, data=json.dumps({
-                'title': issue.title,
-                'body': issue.body,
-                'labels': issue.labels
+                'title': self.title,
+                'body': self.body,
+                'labels': self.labels
             }))
 
     def linked_url(self, end=''):
@@ -124,7 +124,7 @@ class Issue(db.Document):
         self.open = False
         if self.linked():
             github.api().patch(self.linked_url(), data=json.dumps({'state': 'closed'}))
-        e = event.Event(type='closed', author=current_user())
+        e = event.Event(type='closed', author=user.current_user())
         self.events.append(e)
         self.save()
 
@@ -132,7 +132,7 @@ class Issue(db.Document):
         self.open = True
         if self.linked():
             github.api().patch(self.linked_url(), data=json.dumps({'state': 'open'}))
-        e = event.Event(type='reopened', author=current_user())
+        e = event.Event(type='reopened', author=user.current_user())
         self.events.append(e)
         self.save()
 

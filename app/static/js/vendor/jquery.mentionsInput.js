@@ -18,6 +18,7 @@
     minChars      : 2,
     showAvatars   : true,
     elastic       : true,
+    useCurrentVal : true,
     classes       : {
       autoCompleteItemActive : "active"
     },
@@ -351,10 +352,32 @@
       }
     }
 
-    function resetInput() {
-      elmInputBox.val('');
-      mentionsCollection = [];
-      updateValues();
+    function resetInput(currentVal) {
+      if(currentVal){
+        mentionsCollection = [];
+        //var mentionText = utils.htmlEncode(currentVal);
+        var mentionText = currentVal;
+        //var regex = new RegExp("(" + settings.triggerChar.join('|') + ")\\[(.*?)\\]\\((.*?):(.*?)\\)", "gi");
+        var regex = new RegExp("(" + settings.triggerChar + ")\\[(.*?)\\]\\((.*?):(.*?)\\)", "gi");
+        var match;
+        var newMentionText = mentionText;
+        while ((match = regex.exec(mentionText)) != null) {    // Find all matches in a string
+            newMentionText = newMentionText.replace(match[0],match[1]+match[2]);
+            mentionsCollection.push({   // Btw: match[0] is the complete match
+                'id': match[4],
+                'type': match[3],
+                'value': match[2],
+                'trigger': match[1]
+            });
+        }
+        elmInputBox.val(newMentionText);
+        updateValues();
+      }
+      else{
+        elmInputBox.val('');
+        mentionsCollection = [];
+        updateValues();
+      }
     }
 
     // Public methods
@@ -366,7 +389,12 @@
         initTextarea();
         initAutocomplete();
         initMentionsOverlay();
-        resetInput();
+        if(settings.useCurrentVal){
+          resetInput(getInputBoxValue());
+        }
+        else{
+          resetInput();
+        }
 
         if( settings.prefillMention ) {
           addMention( settings.prefillMention );

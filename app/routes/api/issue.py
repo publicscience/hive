@@ -84,6 +84,22 @@ def new_issue(slug):
     form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'project'])
     return render_template('issue/new.html', form=form(request.form))
 
+# Not "proper" but lack of HTTP method support in browsers sucks.
+@app.route('/<string:slug>/issues/<string:id>/edit', methods=['GET', 'POST'])
+@requires_login
+def edit_issue(slug, id):
+    issue = Issue.objects.get_or_404(id=id)
+    form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'project', 'open'])
+    if request.method == 'GET':
+        return render_template('issue/edit.html', form=form(request.form, obj=issue), issue=issue)
+    else:
+        form_ = form(request.form)
+        if form_.validate():
+            form_.populate_obj(issue)
+            issue.process(request.form)
+            issue.save()
+        return redirect(url_for('edit_issue', slug=slug, id=id, _method='GET'))
+
 @app.route('/issues/<string:id>/close', methods=['PUT'])
 def close_issue(id):
     issue = Issue.objects.get_or_404(id=id)

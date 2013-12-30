@@ -40,7 +40,7 @@ def google_authorized():
     session_ = google.get_auth_session(data=data, decoder=json.loads)
 
     # Store access token in session.
-    session['google_access_token'] = session_.access_token, ''
+    session['google_access_token'] = session_.access_token
 
     # Redirect
     return redirect('/')

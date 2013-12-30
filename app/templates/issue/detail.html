@@ -3,7 +3,16 @@
 
     <section class="issue--detail">
         <h4>{{ issue.title }}</h4>
-        <div class="issue--body body">{{ issue.parsed()|safe }}</div>
+        <div class="issue--body body">
+            {% if issue.author.id == current_user.id %}
+                {{ issue.parsed()|safe }}
+                <ul class="issue--actions list__horizontal">
+                    <li><a href="{{ url_for('edit_issue', slug=issue.project.slug, id=issue.id) }}">edit</a></li>
+                </ul>
+            {% else %}
+                {{ issue.parsed()|safe }}
+            {% endif %}
+        </div>
         <ul class='issue--meta'>
             {% if issue.github_id %}
                 <li>
@@ -46,18 +55,23 @@
     <section class="issue--events">
         <h6></h6>
         {% for event in events %}
+            <div>
                 {% if event.body %}
-                <div class="issue--event js-deletable">
+                <div class="issue--event js-parent">
                     <div class="comment--meta">
                         <img src="{{ event.author.picture }}" class="thumb"> {{ event.author.name }} <span class="meta--time">{{ event.ago() }}</span>
                     </div>
                     <div class="comment--body body">
-                        {{ event.parsed()|safe }}
-
                         {% if event.author.id == current_user.id %}
-                            <div class="comment--actions">
-                                    <a href="{{ url_for('comment_api', slug=slug, issue_id=issue.id, id=event.id) }}" data-method="delete">delete</a>
+                            <div class="js-editable">
+                                {{ event.parsed()|safe }}
                             </div>
+                            <ul class="comment--actions list__horizontal">
+                                <li><a href="{{ url_for('comment_api', slug=slug, issue_id=issue.id, id=event.id) }}" data-action="edit">edit</a></li>
+                                <li><a href="{{ url_for('comment_api', slug=slug, issue_id=issue.id, id=event.id) }}" data-method="delete">delete</a></li>
+                            </ul>
+                        {% else %}
+                            {{ event.parsed()|safe }}
                         {% endif %}
                     </div>
                 </div>

@@ -1,5 +1,6 @@
 from app import app
 from flask import request, jsonify
+from app.models import User
 
 @app.route('/users.json')
 def find_users():

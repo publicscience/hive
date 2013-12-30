@@ -15,7 +15,7 @@ require(['config'], function() {
                 $.ajax(url, {
                     type: 'DELETE',
                     success: function() {
-                        link.closest('.js-deletable').remove();
+                        link.closest('.js-parent').remove();
                     }
                 });
             }
@@ -34,6 +34,16 @@ require(['config'], function() {
                     window.location.reload()
                 }
             });
+            return false;
+        });
+
+        // Editing.
+        $('[data-action=edit]').on('click', function(e) {
+            e.preventDefault();
+            var parent = $(this).closest('js-parent'),
+                editable = parent.find('.js-editable'),
+                raw = editable.data('raw');
+
             return false;
         });
 
@@ -57,7 +67,6 @@ require(['config'], function() {
                 });
             });
         });
-
     });
 
 });
