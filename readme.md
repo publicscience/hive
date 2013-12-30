@@ -32,3 +32,14 @@ $ python application.py
 ```
 
 Check out the site at `localhost:5000` (by default).
+
+## Deploying to Heroku
+The app is setup to be deployed to [Heroku](https://heroku.com).
+
+You can use `heroku_setup.sh` as guidance for the terminal commands
+needed to set it up.
+The key here is that you need to setup Heroku environment variables for
+all sensitive configuration options. The application will check for a
+`HEROKU` environment variable, and if it is set, it will load the Heroku
+configuration, which is set to automatically load these sensitive values
+from env vars.
