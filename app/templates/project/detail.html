@@ -1,0 +1,86 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+    <section class="issue--detail">
+        <h4>{{ issue.title }}</h4>
+        <div class="issue--body body">{{ issue.body }}</div>
+        <ul class='issue--meta'>
+            {% if issue.labels %}
+                <li>
+                    <ul class="list__horizontal issue--labels">
+                        <li>Labels:</li>
+                        {% for label in issue.labels %}
+                            <li><a href="{{ url_for('label_issues', label=label)}}">{{ label }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </li>
+            {% endif %}
+            <li>
+                <img src="{{ issue.author.picture }}" class="thumb"> <span class="open">Opened</span> by {{ issue.author.name }} <span class="meta--time">{{ issue.ago() }}</span>
+            </li>
+            {% if not issue.open %}
+            <li>
+                {% set last_closed_event = issue.last_closed_event() %}
+                <img src="{{ last_closed_event.author.picture }}" class="thumb"> <span class="close">Closed</span> by {{ issue.author.name }} <span class="meta--time">{{ last_closed_event.ago() }}</span>
+            </li>
+            {% else %}
+                {% set last_opened_event = issue.last_opened_event() %}
+                {% if last_opened_event %}
+                <img src="{{ last_opened_event.author.picture }}" class="thumb"> <span class="open">Reopened</span> by {{ issue.author.name }} <span class="meta--time">{{ last_opened_event.ago() }}</span>
+                {% endif %}
+            {% endif %}
+        </ul>
+        {% if issue.open %}
+            <button data-id="{{ issue.id }}" data-action="close" class="close">close</button>
+        {% else %}
+            <button data-id="{{ issue.id }}" data-action="open" class="open">reopen</button>
+        {% endif %}
+    </section>
+
+    <section class="issue--events">
+        <h6></h6>
+        {% for event in events %}
+                {% if event.body %}
+                <div class="issue--event js-deletable">
+                    <div class="comment--meta">
+                        <img src="{{ event.author.picture }}" class="thumb"> {{ event.author.name }} <span class="meta--time">{{ event.ago() }}</span>
+                    </div>
+                    <div class="comment--body body">
+                        {{ event.parsed()|safe }}
+
+                        {% if event.author.id == current_user_id %}
+                            <div class="comment--actions">
+                                    <a href="{{ url_for('comment_api', issue_id=issue.id, id=event.id) }}" data-method="delete">delete</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% elif event.type == 'closed' %}
+                <div class="issue--event event__closed">
+                    <div class="event--meta">
+                        <img src="{{ event.author.picture }}" class="thumb"> <span class="close">Closed</span> by {{ event.author.name }} <span class="meta--time">{{ event.ago() }}</span>
+                    </div>
+                </div>
+                {% elif event.type == 'opened' %}
+                <div class="issue--event event__opened">
+                    <div class="event--meta">
+                        <img src="{{ event.author.picture }}" class="thumb"> <span class="open">Reopened</span> by {{ event.author.name }} <span class="meta--time">{{ event.ago() }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <form action="comments" method="post" class='js-preprocess'>
+            {{ form.csrf_token }} 
+            {{ form.body(class="mention-target") }}
+            <div>
+                <textarea autofocus class="mention"></textarea>
+            </div>
+            <div class="actions">
+                <input type="submit" class="open" value="Comment">
+            </div>
+        </form>
+    </section>
+
+{% endblock %}

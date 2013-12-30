@@ -1,0 +1,14 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<h6>Create a new project</h6>
+<form action="." method="post">
+    {{ form.csrf_token }} 
+    {{ form.name(autofocus=True) }}
+    {{ form.repo }}
+    <div class="actions">
+        <input type="submit" class="open" value="Create new project">
+    </div>
+</form>
+
+{% endblock %}

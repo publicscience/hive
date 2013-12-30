@@ -1,0 +1,18 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+    <h6>Projects</h6>
+    <ul>
+        {% for project in projects %}
+            <li class="js-deletable">
+                <h6>
+                    <a href="{{ url_for('project_api', slug=project.slug) }}">{{ project.name }}</a>
+                    {% if project.author.id == current_user_id %}
+                        <a href="{{ url_for('project_api', slug=project.slug) }}" data-method="delete">delete</a>
+                    {% endif %}
+                </h6>
+            </li>
+        {% endfor %}
+    </ul>
+
+{% endblock %}

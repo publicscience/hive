@@ -41,7 +41,7 @@ def logout():
     """
     session.pop('access_token', None)
     session.pop('user_id', None)
-    return redirect(url_for('index'))
+    return redirect('/')
 
 @google.tokengetter
 def get_access_token():
@@ -77,7 +77,7 @@ def authorized(resp):
     session['access_token'] = access_token, ''
 
     # Redirect
-    return redirect(url_for('index'))
+    return redirect('/')
 
 
 def current_user():
