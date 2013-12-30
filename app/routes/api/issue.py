@@ -1,9 +1,9 @@
 from app import app
-from app.routes.oauth import current_user, requires_oauth
+from app.routes.oauth import current_user, requires_login
 from flask import render_template, redirect, request, url_for, jsonify, flash
 from flask.views import MethodView
 from app.models import Issue, Comment, Event, Project
-from app.routes.api import register_api
+from . import register_api
 from flask.ext.mongoengine.wtf import model_form
 
 class IssueAPI(MethodView):
@@ -20,7 +20,7 @@ class IssueAPI(MethodView):
         }
         return context
 
-    @requires_oauth
+    @requires_login
     def get(self, slug, id):
         project = Project.objects.get_or_404(slug=slug)
 
@@ -79,7 +79,7 @@ class IssueAPI(MethodView):
 register_api(IssueAPI, 'issue_api', '/<string:slug>/issues/', id='id', id_type='string')
 
 @app.route('/<string:slug>/issues/new')
-@requires_oauth
+@requires_login
 def new_issue(slug):
     form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'project'])
     return render_template('issue/new.html', form=form(request.form))

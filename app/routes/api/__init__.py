@@ -1,8 +1,5 @@
 from app import app
-from flask import render_template, redirect, request, url_for, jsonify, flash
-from flask.views import MethodView
-from app.models import Issue, Comment, User, Event, Project
-from app.routes.oauth import current_user, requires_oauth
+from flask import request, jsonify
 
 def register_api(view, endpoint, url, id='id', id_type='int'):
     """
@@ -13,6 +10,7 @@ def register_api(view, endpoint, url, id='id', id_type='int'):
     app.add_url_rule(url, view_func=view_func, methods=['POST'])
     app.add_url_rule('%s<%s:%s>/' % (url, id_type, id), view_func=view_func, methods=['GET', 'PUT', 'DELETE'])
 
+from . import comment, issue, project
 
 @app.route('/users.json')
 def find_users():

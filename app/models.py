@@ -99,6 +99,7 @@ class Issue(db.Document):
     labels = db.ListField(db.StringField(max_length=50))
     open = db.BooleanField(default=True)
     project = db.ReferenceField('Project')
+    github_id = db.IntField()
 
     meta = {
             'allow_inheritance': True,

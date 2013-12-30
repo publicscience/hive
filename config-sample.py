@@ -18,3 +18,4 @@ GOOGLE_REDIRECT_URI = '/oauth2callback'
 
 GITHUB_CLIENT_ID = 'some-id'
 GITHUB_CLIENT_SECRET = 'some-secret'
+GITHUB_REDIRECT_URI = '/github_auth'
