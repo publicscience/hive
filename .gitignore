@@ -2,12 +2,9 @@
 *.pyc
 .gitkeep
 *.swp
-app/static/js/vendor/bower/**/*
 config.json
 .sass-cache/
 node_modules/
 app/static/fontcustom/*
 config.py
-!app/static/js/vendor/bower/requirejs/require.js
-!app/static/js/vendor/bower/underscore/underscore-min.js
 log.log
