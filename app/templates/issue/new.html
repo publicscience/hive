@@ -4,12 +4,12 @@
 <h6>Open a new issue</h6>
 <form action="." method="post" class="js-preprocess">
     {{ form.csrf_token }} 
-    {{ form.title(autofocus=True) }}
+    {{ form.title(autofocus=True, placeholder='Issue title') }}
     {{ form.body(class="mention-target") }}
     <div>
-        <textarea class="mention"></textarea>
+        <textarea class="mention" placeholder="Issue description (GitHub markdown supported)"></textarea>
     </div>
-    <input type="text" name="labels" id="labels">
+    <input type="text" name="labels" id="labels" placeholder="Comma-separated labels">
     <div class="actions">
         <input type="submit" class="open" value="Create new issue">
     </div>

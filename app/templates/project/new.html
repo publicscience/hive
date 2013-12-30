@@ -4,8 +4,8 @@
 <h6>Create a new project</h6>
 <form action="." method="post">
     {{ form.csrf_token }} 
-    {{ form.name(autofocus=True) }}
-    {{ form.repo }}
+    {{ form.name(autofocus=True, placeholder='Project name') }}
+    {{ form.repo(placeholder='GitHub repo, e.g. publicscience/hive') }}
     <div class="actions">
         <input type="submit" class="open" value="Create new project">
     </div>
