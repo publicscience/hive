@@ -16,7 +16,7 @@ SECRET_KEY = env['SECRET_KEY']
 MONGO_URL = env['MONGOHQ_URL']
 mongo_re = re.compile('''
         mongodb://
-        (?P<user>[^:]+)
+        (?P<username>[^:]+)
         :
         (?P<password>[^@]+)
         @
