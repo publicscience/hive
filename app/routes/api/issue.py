@@ -58,12 +58,15 @@ class IssueAPI(MethodView):
 
             project.issues.append(issue)
             project.save()
-            return redirect(url_for('issue_api', slug=slug))
+            flash('We have finished assembling your issue.')
+            return redirect(url_for('issue_api', slug=slug, id=issue.id))
 
-        return redirect(url_for('issue_api', slug=slug))
+        flash('You have forgotten something. Without your guidance, we are lost.')
+        return render_template('issue/new.html', form=form)
 
     @requires_login
     def put(self, slug, id):
+        # CURRENTLY UNUSED.
         ctx = self.get_context(id=id)
         issue = ctx['issue']
         form = ctx['form']
@@ -87,7 +90,8 @@ register_api(IssueAPI, 'issue_api', '/<string:slug>/issues/', id='id', id_type='
 @app.route('/<string:slug>/issues/new')
 @requires_login
 def new_issue(slug):
-    return render_template('issue/new.html', form=issue_form(request.form))
+    project = Project.objects.get_or_404(slug=slug)
+    return render_template('issue/new.html', form=issue_form(request.form), project=project)
 
 # Not "proper" but lack of HTTP method support in browsers sucks.
 # Emulate PUT by accepting POST at this endpoint.
@@ -96,13 +100,24 @@ def new_issue(slug):
 def edit_issue(slug, id):
     issue = Issue.objects.get_or_404(id=id)
     if request.method == 'GET':
-        return render_template('issue/edit.html', form=issue_form(request.form, obj=issue), issue=issue, project=issue.project)
+        form = issue_form(request.form, obj=issue)
+        return render_template('issue/edit.html', form=form, issue=issue, project=issue.project)
     else:
         form = issue_form(request.form)
         if form.validate():
             form.populate_obj(issue)
             issue.process(request.form)
-        return redirect(url_for('edit_issue', slug=slug, id=id, _method='GET'))
+            flash('We have updated your issue.')
+            return redirect(url_for('issue_api', slug=slug, id=id, _method='GET'))
+
+        # To preserve labels. I assume there's a better way
+        # but WTForms has been a fucking nightmare about this
+        # since it won't let me override form.labels.data.
+        labels = [label.strip() for label in request.form.get('labels').split(',') if label]
+        issue.labels = labels
+
+        flash('Something is wrong -- We need your guidance!')
+        return render_template('issue/edit.html', form=form, issue=issue, project=issue.project)
 
 @app.route('/issues/<string:id>/close', methods=['PUT'])
 @requires_login

@@ -52,13 +52,26 @@ class ProjectAPI(MethodView):
             form.populate_obj(project)
             project.author = current_user()
             project.users = User.objects.all() # for now, all users are on the projects
-            project.save()
-            return redirect(url_for('project_api'))
 
-        return redirect(url_for('project_api'))
+            # Check that repo exists and that the user can access it.
+            if project.repo:
+                if not project.author.github_access:
+                    return redirect(url_for('github_login'))
+                if not project.ping_repo():
+                    flash('The repo <b>%s</b> doesn\'t seem to exist!' % project.repo)
+                    form.repo.errors = ['Can\'t access this repo.']
+                    return render_template('project/new.html', form=form)
+
+            project.save()
+            flash('The <b>%s</b> project was successfully summoned.' % project.name)
+            return redirect(url_for('project_api', slug=project.slug))
+
+        flash('You have forgotten something. Without your guidance, we are lost.')
+        return render_template('project/new.html', form=form)
 
     @requires_login
     def put(self, slug):
+        # CURRENTLY UNUSED.
         ctx = self.get_context(slug=slug)
         project = ctx['project']
         form = ctx['form']

@@ -32,7 +32,7 @@
             {% if messages %}
               <div class="notifications">
                 {% for message in messages %}
-                    {{ message }}
+                    {{ message|safe }}
                 {% endfor %}
               </div>
             {% endif %}

@@ -3,9 +3,27 @@
 
 <h6>Create a new project</h6>
 <form action="." method="post">
-    {{ form.csrf_token }} 
-    {{ form.name(autofocus=True, placeholder='Project name') }}
-    {{ form.repo(placeholder='GitHub repo, e.g. publicscience/hive') }}
+    {{ form.csrf_token }}
+    <div class="field">
+        {{ form.name(autofocus=True, placeholder='Project name') }}
+        {% if form.name.errors %}
+            <div class="errors">
+                {% for error in form.name.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+    <div class="field">
+        {{ form.repo(placeholder='GitHub repo, e.g. publicscience/hive') }}
+        {% if form.repo.errors %}
+            <div class="errors">
+                {% for error in form.repo.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
     <div class="actions">
         <input type="submit" class="open" value="Create new project">
     </div>

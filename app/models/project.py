@@ -47,9 +47,15 @@ class Project(db.Document):
                 i.sync(data=gi)
             self.save()
 
-    # Linked to Github or not.
+    # Linked to GitHub or not.
     def linked(self):
         return bool(self.repo and self.author.linked())
+
+    # Check for the repo on GitHub.
+    def ping_repo(self):
+        token = self.author.github_access
+        resp = github.api(token=token).get('/repos/'+self.repo)
+        return resp.status_code == 200
 
     @classmethod
     def pre_delete(cls, sender, document, **kwargs):

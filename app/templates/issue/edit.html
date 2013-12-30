@@ -3,13 +3,24 @@
 
 <h6>Edit an issue</h6>
 <form action="{{ url_for('edit_issue', slug=issue.project.slug, id=issue.id) }}" method="post" class="js-preprocess">
-    {{ form.csrf_token }} 
-    {{ form.title(autofocus=True) }}
+    {{ form.csrf_token }}
+    <div class="field">
+        {{ form.title(autofocus=True) }}
+        {% if form.title.errors %}
+            <div class="errors">
+                {% for error in form.title.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
     {{ form.body(class="mention-target") }}
-    <div>
+    <div class="field">
         <textarea class="mention">{{ form.body.data }}</textarea>
     </div>
-    <input type="text" name="labels" id="labels" value="{{ form.labels.data|join(', ') }}">
+    <div class="field">
+        <input type="text" name="labels" id="labels" value="{{ issue.labels|join(', ') }}">
+    </div>
     <div class="actions">
         <input type="submit" class="open" value="update issue">
     </div>
