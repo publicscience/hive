@@ -54,7 +54,8 @@ def current_user():
         g_user = response.json()
         user, created = User.objects.get_or_create(google_id=g_user['id'])
         user.name = g_user['name']
-        user.picture = g_user['picture']
+        user.picture = g_user.get('picture', url_for('static', filename='/assets/img/default_pic.png', _external=True))
+        print(user.picture)
         user.save()
         session['user_id'] = g_user['id']
     else:
