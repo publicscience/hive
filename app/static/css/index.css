@@ -1005,7 +1005,10 @@ nav {
 
 .flag {
   font-size: 0.6em;
-  color: #cccccc; }
+  color: #cccccc;
+  border: 1px dotted #bacceb;
+  margin: 0 1em;
+  padding: 0.2em 0.4em; }
 
 @media only screen and (max-width: 720px) {
   .issue, .project {
