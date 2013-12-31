@@ -11,8 +11,8 @@ def parse_markup(text):
     text = mention_re.sub('<a href="/\g<type>s/\g<id>">\g<mention></a>', text)
 
     # Add markup for flags.
-    flag_re = re.compile('%(?P<flag>[^%]+)\s')
-    return flag_re.sub('<span class="flag">\g<flag></span> ', text)
+    flag_re = re.compile('%(?P<flag>[^\s]+)')
+    return flag_re.sub('<span class="flag">\g<flag></span> ', text).strip()
 
 def ago(time=False):
     """
