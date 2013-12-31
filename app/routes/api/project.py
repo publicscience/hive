@@ -64,7 +64,7 @@ class ProjectAPI(MethodView):
 
             project.save()
             flash('The <b>%s</b> project was successfully summoned.' % project.name)
-            return redirect(url_for('project_api', slug=project.slug))
+            return redirect(url_for('project_api', slug=project.slug, _method='GET'))
 
         flash('You have forgotten something. Without your guidance, we are lost.')
         return render_template('project/new.html', form=form)
