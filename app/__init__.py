@@ -13,4 +13,4 @@ else:
 # Setup the database.
 db = MongoEngine(app)
 
-from app import routes, notify
+from app import routes
