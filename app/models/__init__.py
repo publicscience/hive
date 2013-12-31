@@ -1,18 +1,34 @@
 import re
 
+mention_re = re.compile('''
+    @\[
+    (?P<mention>[^]]+)\]
+    \((?P<type>[a-z]+):
+    (?P<id>[a-z0-9]+)\)
+''', re.VERBOSE)
+
+issue_re = r'(http[s]?://[^\s]+)?/(?P<project>[^/]+)/issues/(?P<id>[a-z0-9]+)(/)?'
+
 def parse_markup(text):
     # Replace mentions with links to the mentioned entity.
-    mention_re = re.compile('''
-        @\[
-        (?P<mention>[^]]+)\]
-        \((?P<type>[a-z]+):
-        (?P<id>[a-z0-9]+)\)
-    ''', re.VERBOSE)
     text = mention_re.sub('<a href="/\g<type>s/\g<id>">\g<mention></a>', text)
 
     # Add markup for flags.
     flag_re = re.compile('%(?P<flag>[^\s]+)')
-    return flag_re.sub('<span class="flag">\g<flag></span> ', text).strip()
+    text = flag_re.sub('<span class="flag">\g<flag></span> ', text).strip()
+
+    # Add markup for referenced issues.
+    text = re.sub(issue_re, '<a href="/\g<project>/issues/\g<id>">issue:\g<id></a>', text)
+    return text
+
+def parse_issues(text):
+    # Parse out issue references, returning their ids.
+    ids = [m.group('id') for m in re.finditer(issue_re, text)]
+    return ids
+
+def parse_mentions(text):
+    # Find all matches for mentions.
+    return mention_re.finditer(text)
 
 def ago(time=False):
     """
@@ -60,7 +76,7 @@ def ago(time=False):
     return str(day_diff/365) + " years ago"
 
 from user import User
-from comment import Comment
 from event import Event
 from issue import Issue
+from comment import Comment
 from project import Project

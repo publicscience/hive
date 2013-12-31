@@ -8,6 +8,7 @@ class Event(db.EmbeddedDocument):
     author = db.ReferenceField('User')
     github_id = db.IntField()
     commit_id = db.StringField(max_length=255)
+    data = db.DictField()
 
     def ago(self):
         return ago(time=self.created_at)

@@ -11,6 +11,9 @@ class User(db.Document):
     github_id = db.IntField() # note: setting unique=True automatically sets required=True
     github_access = db.StringField()
 
+    # When A mentions B, B is referenced by A.
+    references = db.ListField(db.GenericReferenceField())
+
     # Linked to Github or not.
     def linked(self):
         return bool(self.github_id)

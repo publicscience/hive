@@ -19,6 +19,7 @@ class CommentAPI(MethodView):
             comment = Comment()
             form.populate_obj(comment)
             comment.author = current_user()
+            comment.process()
 
             if issue.linked():
                 # Create comment on GitHub
@@ -29,6 +30,8 @@ class CommentAPI(MethodView):
                 except KeyError as e:
                     return redirect(url_for('github_login', _method='GET'))
 
+            issue.parse_references(comment.body)
+
             issue.comments.append(comment)
             issue.save()
             return redirect(url_for('issue_api', slug=slug, id=issue.id, _method='GET'))
@@ -37,7 +40,10 @@ class CommentAPI(MethodView):
 
     @requires_login
     def delete(self, slug, issue_id, id):
-        Issue.objects(id=issue_id).update_one(pull__comments__id=id)
+        issue = Issue.objects(id=issue_id).first
+        c = next(c_ for c_ in issue.comments if c_.id==id)
+        c.destroy() # clean up some stuff
+        issue.comments.remove(c)
         return jsonify({'success':True})
 
 view_func = CommentAPI.as_view('comment_api')

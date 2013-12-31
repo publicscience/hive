@@ -102,6 +102,12 @@
                         <img src="{{ event.author.picture }}" class="thumb"> <span class="open">Reopened</span> by {{ event.author.name }} <span class="meta--time">{{ event.ago() }}</span>
                     </div>
                 </div>
+                {% elif event.type == 'referenced' %}
+                <div class="issue--event event__referenced">
+                    <div class="event--meta">
+                        <span class="referenced">Referenced</span> in <a href="{{ url_for('issue_api', id=event.data['referencer_id'], slug=event.data['project_slug']) }}">{{ event.data['referencer_title'] }}</a> <span class="meta--time">{{ event.ago() }}</span>
+                    </div>
+                </div>
                 {% endif %}
             </div>
         {% endfor %}

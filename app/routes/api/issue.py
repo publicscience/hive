@@ -58,7 +58,7 @@ class IssueAPI(MethodView):
             project.issues.append(issue)
             project.save()
             flash('We have finished assembling your issue.')
-            return redirect(url_for('issue_api', slug=slug, id=issue.id))
+            return redirect(url_for('issue_api', slug=slug, id=issue.id, _method='GET'))
 
         flash('You have forgotten something. Without your guidance, we are lost.')
         return render_template('issue/new.html', form=form)

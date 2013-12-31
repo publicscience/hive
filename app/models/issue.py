@@ -1,10 +1,12 @@
 from app import db
 from gfm import markdown
-from . import ago, parse_markup
+from . import ago, parse_markup, parse_mentions, parse_issues
 from app.routes.oauth import github
-from . import comment, event, user
+from . import event, user, comment
 from datetime import datetime
 import json
+from mongoengine import signals
+from flask import url_for
 
 class Issue(db.Document):
     created_at = db.DateTimeField(default=datetime.utcnow(), required=True)
@@ -18,6 +20,8 @@ class Issue(db.Document):
     open = db.BooleanField(default=True)
     project = db.ReferenceField('Project')
     github_id = db.IntField()
+    mentions = db.ListField(db.ReferenceField('User'))
+    references = db.ListField(db.ReferenceField('self'))
 
     meta = {
             'allow_inheritance': True,
@@ -33,6 +37,26 @@ class Issue(db.Document):
     def process(self, data):
         self.labels = [label.strip() for label in data.get('labels').split(',') if label]
         self.author = user.current_user()
+
+        # Parse out mentions and find authors.
+        current_mentioned_ids = set([e.id for e in self.mentions])
+        mentioned_ids = set([match.group('id') for match in parse_mentions(self.body)])
+        new_mentions = mentioned_ids - current_mentioned_ids
+        old_mentions = current_mentioned_ids - mentioned_ids
+
+        # Add in new mentions.
+        for id in new_mentions:
+            u = user.User.objects(id=id).first()
+            if u:
+                self.mentions.append(u)
+                u.references.append(self) # Add issue to the user as well
+
+        # Remove mentions that are gone now.
+        for id in old_mentions:
+            u = next((u_ for u_ in self.mentions if u_.id==id), 0)
+            if u:
+                self.mentions.remove(u)
+                u.references.remove(self) # Remove from the user as well
 
         # Update corresponding GitHub issue.
         if self.github_id:
@@ -59,6 +83,35 @@ class Issue(db.Document):
             self.github_id = resp.json()['number']
 
         self.save()
+
+        # Process references to other issues.
+        # This has to happen after saving so the issue has an ID.
+        self.parse_references(self.body)
+
+    def parse_references(self, text):
+        # Process references to other issues.
+        referenced_issue_ids = parse_issues(text)
+        for id in referenced_issue_ids:
+            i = Issue.objects(id=id).first()
+            # If this is a newly referenced issue,
+            # create an event in the referenced issue.
+            if i and i not in self.references:
+                data = {
+                        'project_slug': self.project.slug,
+                        'referencer_id': self.id,
+                        'referencer_title': self.title
+                }
+                self.references.append(i)
+                e = event.Event(type='referenced', data=data)
+                i.events.append(e)
+                i.save()
+        self.save()
+
+    @classmethod
+    def pre_delete(cls, sender, document, **kwargs):
+        # Have to manually clean up references to this issue.
+        for u in document.mentions:
+            u.references = [r for r in u.references if r != self]
 
     # Corresponding GitHub endpoint for this issue.
     def linked_url(self, end=''):
@@ -194,3 +247,5 @@ class Issue(db.Document):
 
     def find_comment(self, id):
         return next((c for c in self.comments if c.id==id), None)
+
+signals.pre_delete.connect(Issue.pre_delete, sender=Issue)
