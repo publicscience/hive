@@ -8,6 +8,11 @@
         </ul>
     </h6>
     <ul class="list__horizontal__justify">
+        {% if not issues %}
+            <div class="notifications">
+                Oh. My. Goodness. No issues here!
+            </div>
+        {% endif %}
         {% for issue in issues %}
             <li class="issue">
                 <h4 class="title">
