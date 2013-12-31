@@ -52,10 +52,14 @@
                 {% endif %}
             {% endif %}
         </ul>
-        {% if issue.open %}
-            <button data-id="{{ issue.id }}" data-action="close" class="close">close</button>
+        {% if not issue.github_id or current_user.github_id %}
+            {% if issue.open %}
+                <button data-id="{{ issue.id }}" data-action="close" class="close">close</button>
+            {% else %}
+                <button data-id="{{ issue.id }}" data-action="open" class="open">reopen</button>
+            {% endif %}
         {% else %}
-            <button data-id="{{ issue.id }}" data-action="open" class="open">reopen</button>
+            To participate in Github issues you must <a href="{{ url_for('github_login') }}">authenticate with your Github account</a>.
         {% endif %}
     </section>
 
