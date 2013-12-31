@@ -1003,6 +1003,10 @@ nav {
   .project .title {
     border-bottom: 1px solid rgba(0, 0, 0, 0.15); }
 
+.flag {
+  font-size: 0.6em;
+  color: #cccccc; }
+
 @media only screen and (max-width: 720px) {
   .issue, .project {
     width: 100%; } }

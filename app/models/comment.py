@@ -1,7 +1,7 @@
 from app import db
 from bson.objectid import ObjectId
 from gfm import markdown
-from . import ago, parse_mentions
+from . import ago, parse_markup
 from datetime import datetime
 
 class Comment(db.EmbeddedDocument):
@@ -22,5 +22,5 @@ class Comment(db.EmbeddedDocument):
     # GitHub flavorted Markdown & mention parsing.
     def parsed(self):
         parsed = self.body
-        parsed = parse_mentions(parsed)
+        parsed = parse_markup(parsed)
         return markdown(parsed)

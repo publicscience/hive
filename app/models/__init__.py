@@ -1,6 +1,6 @@
 import re
 
-def parse_mentions(text):
+def parse_markup(text):
     # Replace mentions with links to the mentioned entity.
     mention_re = re.compile('''
         @\[
@@ -8,8 +8,11 @@ def parse_mentions(text):
         \((?P<type>[a-z]+):
         (?P<id>[a-z0-9]+)\)
     ''', re.VERBOSE)
+    text = mention_re.sub('<a href="/\g<type>s/\g<id>">\g<mention></a>', text)
 
-    return mention_re.sub('<a href="/\g<type>s/\g<id>">\g<mention></a>', text)
+    # Add markup for flags.
+    flag_re = re.compile('%(?P<flag>[^%]+)\s')
+    return flag_re.sub('<span class="flag">\g<flag></span> ', text)
 
 def ago(time=False):
     """

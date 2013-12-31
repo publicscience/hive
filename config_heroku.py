@@ -34,7 +34,6 @@ MONGODB_SETTINGS = {
     'HOST': mongo.group('host'),
     'PORT': int(mongo.group('port'))
 }
-print(MONGODB_SETTINGS)
 
 AUTH_USER = env['AUTH_USER']
 AUTH_PASS = env['AUTH_PASS']

@@ -1,6 +1,6 @@
 from app import db
 from gfm import markdown
-from . import ago, parse_mentions
+from . import ago, parse_markup
 from app.routes.oauth import github
 from . import comment, event, user
 from datetime import datetime
@@ -181,7 +181,7 @@ class Issue(db.Document):
     # GitHub flavorted Markdown & mention parsing.
     def parsed(self):
         parsed = self.body
-        parsed = parse_mentions(parsed)
+        parsed = parse_markup(parsed)
         return markdown(parsed)
 
     # Most recent closed event.
