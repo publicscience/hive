@@ -52,9 +52,8 @@ class IssueAPI(MethodView):
             project = ctx['project']
 
             issue = Issue()
-            form.populate_obj(issue)
             issue.project = project
-            issue.process(request.form)
+            _process_issue(issue, form, request)
 
             project.issues.append(issue)
             project.save()
@@ -72,8 +71,7 @@ class IssueAPI(MethodView):
         form = ctx['form']
 
         if form.validate():
-            form.populate_obj(issue)
-            issue.process(request.form)
+            _process_issue(issue, form, request.form)
             return redirect(url_for('issue_api', slug=slug, id=issue.id))
 
         return redirect(url_for('issue_api', slug=slug, id=issue.id))
@@ -105,8 +103,7 @@ def edit_issue(slug, id):
     else:
         form = issue_form(request.form)
         if form.validate():
-            form.populate_obj(issue)
-            issue.process(request.form)
+            _process_issue(issue, form, request)
             flash('We have updated your issue.')
             return redirect(url_for('issue_api', slug=slug, id=id, _method='GET'))
 
@@ -155,3 +152,11 @@ def label_issues(slug, label):
     return render_template('issue/list.html', issues=issues, project=project)
 
 
+# Convenience method for updating an issue.
+def _process_issue(issue, form, request):
+    try:
+        form.populate_obj(issue)
+        issue.process(request.form)
+    except KeyError as e:
+        flash('We weren\'t able to link with GitHub. Try authenticating.')
+        return redirect(url_for('github_info'))
