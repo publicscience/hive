@@ -1,6 +1,6 @@
 from app import db
 from gfm import markdown
-from . import ago, parse_markup, parse_mentions
+from app.util import ago, parse_markup, parse_mentions
 from app.routes.oauth import github
 from . import event, user
 from datetime import datetime

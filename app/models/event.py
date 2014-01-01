@@ -1,6 +1,6 @@
 from app import db
 from datetime import datetime
-from . import ago
+from app.util import ago
 
 class Event(db.EmbeddedDocument):
     created_at = db.DateTimeField(default=datetime.utcnow(), required=True)

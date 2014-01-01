@@ -91,7 +91,7 @@ class ProjectAPI(MethodView):
 
         return jsonify({'success':True})
 
-register_api(ProjectAPI, 'project_api', '/', id='slug', id_type='string')
+register_api(ProjectAPI, 'project_api', '/p/', id='slug', id_type='string')
 
 
 @app.route('/new')

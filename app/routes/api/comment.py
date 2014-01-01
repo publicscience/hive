@@ -47,6 +47,6 @@ class CommentAPI(MethodView):
         return jsonify({'success':True})
 
 view_func = CommentAPI.as_view('comment_api')
-app.add_url_rule('/<string:slug>/issues/<string:issue_id>/comments', view_func=view_func, methods=['POST'])
-app.add_url_rule('/<string:slug>/issues/<string:issue_id>/comments/<string:id>', view_func=view_func, methods=['PUT', 'DELETE'])
+app.add_url_rule('/p/<string:slug>/issues/<string:issue_id>/comments', view_func=view_func, methods=['POST'])
+app.add_url_rule('/p/<string:slug>/issues/<string:issue_id>/comments/<string:id>', view_func=view_func, methods=['PUT', 'DELETE'])
 

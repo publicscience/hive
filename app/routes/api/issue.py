@@ -85,7 +85,7 @@ class IssueAPI(MethodView):
 
 register_api(IssueAPI, 'issue_api', '/<string:slug>/issues/', id='id', id_type='string')
 
-@app.route('/<string:slug>/issues/new')
+@app.route('/p/<string:slug>/issues/new')
 @requires_login
 def new_issue(slug):
     project = Project.objects.get_or_404(slug=slug)
@@ -93,7 +93,7 @@ def new_issue(slug):
 
 # Not "proper" but lack of HTTP method support in browsers sucks.
 # Emulate PUT by accepting POST at this endpoint.
-@app.route('/<string:slug>/issues/<string:id>/edit', methods=['GET', 'POST'])
+@app.route('/p/<string:slug>/issues/<string:id>/edit', methods=['GET', 'POST'])
 @requires_login
 def edit_issue(slug, id):
     issue = Issue.objects.get_or_404(id=id)
@@ -116,35 +116,35 @@ def edit_issue(slug, id):
         flash('Something is wrong -- We need your guidance!')
         return render_template('issue/edit.html', form=form, issue=issue, project=issue.project)
 
-@app.route('/issues/<string:id>/close', methods=['PUT'])
+@app.route('/p/issues/<string:id>/close', methods=['PUT'])
 @requires_login
 def close_issue(id):
     issue = Issue.objects.get_or_404(id=id)
     issue.close()
     return jsonify({'success':True})
 
-@app.route('/issues/<string:id>/open', methods=['PUT'])
+@app.route('/p/issues/<string:id>/open', methods=['PUT'])
 @requires_login
 def open_issue(id):
     issue = Issue.objects.get_or_404(id=id)
     issue.reopen()
     return jsonify({'success':True})
 
-@app.route('/<string:slug>/closed')
+@app.route('/p/<string:slug>/closed')
 @requires_login
 def closed_issues(slug):
     project = Project.objects.get_or_404(slug=slug)
     issues = Issue.objects(open=False, project=project)
     return render_template('issue/list.html', issues=issues, project=project)
 
-@app.route('/<string:slug>/open')
+@app.route('/p/<string:slug>/open')
 @requires_login
 def open_issues(slug):
     project = Project.objects.get_or_404(slug=slug)
     issues = Issue.objects(open=True, project=project)
     return render_template('issue/list.html', issues=issues, project=project)
 
-@app.route('/<string:slug>/label/<string:label>')
+@app.route('/p/<string:slug>/label/<string:label>')
 @requires_login
 def label_issues(slug, label):
     project = Project.objects.get_or_404(slug=slug)
