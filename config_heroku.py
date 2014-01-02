@@ -5,6 +5,7 @@ import re
 # Set these values as environment variables in your Heroku environment with:
 # $ heroku config:add SOME_VAR=some_value
 
+DEBUG = True
 CSRF_ENABLED = True
 SECRET_KEY = env['SECRET_KEY']
 
