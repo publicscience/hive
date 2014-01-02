@@ -172,6 +172,7 @@ class Issue(db.Document):
     def _sync_comments(self):
         # Get comments, and update them all.
         default_author = user.User.default()
+        token = self.project.author.github_access
         gcs = github.api(token=token).get(self.linked_url(end='/comments')).json()
         for gc in gcs:
             # Clean up redundant/outdated comment.
@@ -199,6 +200,7 @@ class Issue(db.Document):
     def _sync_events(self):
         # Get events,and update them all.
         default_author = user.User.default()
+        token = self.project.author.github_access
         ges = github.api(token=token).get(self.linked_url(end='/events')).json()
         for ge in ges:
             # Clean up redundant/outdated event.
