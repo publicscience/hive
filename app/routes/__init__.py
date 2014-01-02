@@ -8,4 +8,5 @@ def internal_error(error):
 
 @app.errorhandler(500)
 def internal_error(error):
+    app.logger.exception(error)
     return render_template('500.html'), 500
