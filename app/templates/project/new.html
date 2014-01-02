@@ -2,7 +2,7 @@
 {% block content %}
 
 <h6>Create a new project</h6>
-<form action="." method="post">
+<form action="/p/" method="post">
     {{ form.csrf_token }}
     <div class="field">
         {{ form.name(autofocus=True, placeholder='Project name') }}

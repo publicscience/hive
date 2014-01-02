@@ -31,21 +31,21 @@ class Comment(db.EmbeddedDocument):
 
     def process(self):
         # Parse out mentions and find authors.
-        current_mentioned_ids = set([e.id for e in self.mentions])
+        current_mentioned_ids = set([e.google_id for e in self.mentions])
         mentioned_ids = set([match.group('id') for match in parse_mentions(self.body)])
         new_mentions = mentioned_ids - current_mentioned_ids
         old_mentions = current_mentioned_ids - mentioned_ids
 
         # Add in new mentions.
         for id in new_mentions:
-            u = user.User.objects(id=id).first()
+            u = user.User.objects(google_id=id).first()
             if u:
                 self.mentions.append(u)
                 u.references.append(self) # Add issue to the user as well
 
         # Remove mentions that are gone now.
         for id in old_mentions:
-            u = next((u_ for u_ in self.mentions if u_.id==id), 0)
+            u = next((u_ for u_ in self.mentions if u_.google_id==id), 0)
             if u:
                 self.mentions.remove(u)
                 u.references.remove(self) # Remove from the user as well

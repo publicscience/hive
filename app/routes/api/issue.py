@@ -83,7 +83,7 @@ class IssueAPI(MethodView):
         issue.delete()
         return jsonify({'success':True})
 
-register_api(IssueAPI, 'issue_api', '/<string:slug>/issues/', id='id', id_type='string')
+register_api(IssueAPI, 'issue_api', '/p/<string:slug>/issues/', id='id', id_type='string')
 
 @app.route('/p/<string:slug>/issues/new')
 @requires_login

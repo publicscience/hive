@@ -38,12 +38,13 @@ class Issue(db.Document):
         self.labels = [label.strip() for label in data.get('labels').split(',') if label]
         self.author = user.current_user()
 
+        self.save()
+
         # Creates/updates a corresponding GitHub issue if conditions are met.
-        # This saves the issue as well.
         self.push_to_github()
 
         # Parses and saves mentions on the issue and mentioned users.
-        # This saves the issue as well.
+        # This has to happen after saving so the issue has an ID.
         self.parse_mentions()
 
         # Process references to other issues.
@@ -77,14 +78,14 @@ class Issue(db.Document):
 
     def parse_mentions(self):
         # Parse out mentions and find authors.
-        current_mentioned_ids = set([str(e.id) for e in self.mentions])
-        mentioned_ids = set([match.group('id') for match in parse_mentions(self.body)])
+        current_mentioned_ids = set([e.google_id for e in self.mentions])
+        mentioned_ids = set([(match.group('id')) for match in parse_mentions(self.body)])
         new_mentions = mentioned_ids - current_mentioned_ids
         old_mentions = current_mentioned_ids - mentioned_ids
 
         # Add in new mentions.
         for id in new_mentions:
-            u = user.User.objects(id=id).first()
+            u = user.User.objects(google_id=id).first()
             if u:
                 self.mentions.append(u)
                 u.references.append(self) # Add issue to the user as well
@@ -92,7 +93,7 @@ class Issue(db.Document):
 
         # Remove mentions that are gone now.
         for id in old_mentions:
-            u = next((u_ for u_ in self.mentions if str(u_.id)==id), 0)
+            u = next((u_ for u_ in self.mentions if u_.google_id==id), 0)
             if u:
                 self.mentions.remove(u)
                 u.references.remove(self) # Remove from the user as well
@@ -268,6 +269,12 @@ class Issue(db.Document):
         return next((e for e in reversed(self.events) if e.type=='opened'), None)
 
     def find_comment(self, id):
-        return next((c for c in self.comments if c.id==id), None)
+        return next(c_ for c_ in self.comments if str(c_.id)==id)
+
+    def delete_comment(self, id):
+        c = self.find_comment(id)
+        c.destroy()
+        self.comments.remove(c)
+        self.save()
 
 signals.pre_delete.connect(Issue.pre_delete, sender=Issue)

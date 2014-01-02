@@ -78,8 +78,8 @@
                                 {{ event.parsed()|safe }}
                             </div>
                             <ul class="comment--actions list__horizontal">
-                                <li><a href="{{ url_for('comment_api', slug=slug, issue_id=issue.id, id=event.id) }}" data-action="edit">edit</a></li>
-                                <li><a href="{{ url_for('comment_api', slug=slug, issue_id=issue.id, id=event.id) }}" data-method="delete">delete</a></li>
+                                <li><a href="{{ url_for('comment_api', slug=issue.project.slug, issue_id=issue.id, id=event.id) }}" data-action="edit">edit</a></li>
+                                <li><a href="{{ url_for('comment_api', slug=issue.project.slug, issue_id=issue.id, id=event.id) }}" data-method="delete">delete</a></li>
                             </ul>
                         {% else %}
                             {{ event.parsed()|safe }}

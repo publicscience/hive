@@ -97,7 +97,7 @@ class IssueTest(AppCase):
         u.save()
 
         # Tests adds mentions
-        self.issue.body = 'Some body text with a mention @[Numpy](user:%s)' % u.id
+        self.issue.body = 'Some body text with a mention @[Numpy](user:%s)' % u.google_id
         self.issue.parse_mentions()
 
         u.reload()
@@ -118,7 +118,7 @@ class IssueTest(AppCase):
         u_ = User(name='Lumpy', google_id='2')
         u_.save()
 
-        self.issue.body = 'Some body text with two mentions @[Numpy](user:%s) @[Lumpy](user:%s)' % (u.id, u_.id)
+        self.issue.body = 'Some body text with two mentions @[Numpy](user:%s) @[Lumpy](user:%s)' % (u.google_id, u_.google_id)
         self.issue.parse_mentions()
 
         u.reload()
@@ -128,7 +128,7 @@ class IssueTest(AppCase):
         self.assertEqual(len(u.references), 1)
         self.assertEqual(len(u_.references), 1)
 
-        self.issue.body = 'Some body text with two mentions @[Lumpy](user:%s)' % u_.id
+        self.issue.body = 'Some body text with two mentions @[Lumpy](user:%s)' % u_.google_id
         self.issue.parse_mentions()
 
         u.reload()

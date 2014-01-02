@@ -40,10 +40,8 @@ class CommentAPI(MethodView):
 
     @requires_login
     def delete(self, slug, issue_id, id):
-        issue = Issue.objects(id=issue_id).first
-        c = next(c_ for c_ in issue.comments if c_.id==id)
-        c.destroy() # clean up some stuff
-        issue.comments.remove(c)
+        issue = Issue.objects(id=issue_id).first()
+        issue.delete_comment(id)
         return jsonify({'success':True})
 
 view_func = CommentAPI.as_view('comment_api')
