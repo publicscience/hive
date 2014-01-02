@@ -11,8 +11,8 @@ from flask import url_for
 class Issue(db.Document):
     created_at = db.DateTimeField(default=datetime.utcnow(), required=True)
     updated_at = db.DateTimeField(default=datetime.utcnow(), required=True)
-    title = db.StringField(max_length=255, required=True, default='Issue')
-    body = db.StringField(verbose_name='Issue')
+    title = db.StringField(max_length=255, required=True, default='New Issue')
+    body = db.StringField(verbose_name='Issue', default='')
     author = db.ReferenceField('User')
     comments = db.ListField(db.EmbeddedDocumentField(comment.Comment))
     events = db.ListField(db.EmbeddedDocumentField(event.Event))
@@ -38,26 +38,19 @@ class Issue(db.Document):
         self.labels = [label.strip() for label in data.get('labels').split(',') if label]
         self.author = user.current_user()
 
-        # Parse out mentions and find authors.
-        current_mentioned_ids = set([e.id for e in self.mentions])
-        mentioned_ids = set([match.group('id') for match in parse_mentions(self.body)])
-        new_mentions = mentioned_ids - current_mentioned_ids
-        old_mentions = current_mentioned_ids - mentioned_ids
+        # Creates/updates a corresponding GitHub issue if conditions are met.
+        # This saves the issue as well.
+        self.push_to_github()
 
-        # Add in new mentions.
-        for id in new_mentions:
-            u = user.User.objects(id=id).first()
-            if u:
-                self.mentions.append(u)
-                u.references.append(self) # Add issue to the user as well
+        # Parses and saves mentions on the issue and mentioned users.
+        # This saves the issue as well.
+        self.parse_mentions()
 
-        # Remove mentions that are gone now.
-        for id in old_mentions:
-            u = next((u_ for u_ in self.mentions if u_.id==id), 0)
-            if u:
-                self.mentions.remove(u)
-                u.references.remove(self) # Remove from the user as well
+        # Process references to other issues.
+        # This has to happen after saving so the issue has an ID.
+        self.parse_references(self.body)
 
+    def push_to_github(self):
         # Update corresponding GitHub issue.
         if self.github_id:
             url = self.linked_url()
@@ -82,11 +75,29 @@ class Issue(db.Document):
 
             self.github_id = resp.json()['number']
 
-        self.save()
+    def parse_mentions(self):
+        # Parse out mentions and find authors.
+        current_mentioned_ids = set([str(e.id) for e in self.mentions])
+        mentioned_ids = set([match.group('id') for match in parse_mentions(self.body)])
+        new_mentions = mentioned_ids - current_mentioned_ids
+        old_mentions = current_mentioned_ids - mentioned_ids
 
-        # Process references to other issues.
-        # This has to happen after saving so the issue has an ID.
-        self.parse_references(self.body)
+        # Add in new mentions.
+        for id in new_mentions:
+            u = user.User.objects(id=id).first()
+            if u:
+                self.mentions.append(u)
+                u.references.append(self) # Add issue to the user as well
+                u.save()
+
+        # Remove mentions that are gone now.
+        for id in old_mentions:
+            u = next((u_ for u_ in self.mentions if str(u_.id)==id), 0)
+            if u:
+                self.mentions.remove(u)
+                u.references.remove(self) # Remove from the user as well
+                u.save()
+        self.save()
 
     def parse_references(self, text):
         # Process references to other issues.
@@ -123,82 +134,93 @@ class Issue(db.Document):
     # Optionally pass in data to update with.
     def sync(self, data=None):
         if self.linked() and self.project.linked():
-            default_author = user.User.default()
-            token = self.project.author.github_access
 
-            if data is None:
-                data = github.api(token=token).get(self.linked_url()).json()
-
-            # Process data and apply it to the issue.
-            open = True if data['state'] == 'open' else False
-            labels = [label['name'] for label in data['labels']]
-            author = user.User.objects(github_id=data['user']['id']).first()
-            if not author:
-                author = default_author
-
-            updates = {
-                'created_at': datetime.strptime(data['created_at'], '%Y-%m-%dT%H:%M:%SZ'),
-                'updated_at': datetime.strptime(data['updated_at'], '%Y-%m-%dT%H:%M:%SZ'),
-                'title': data['title'],
-                'body': data['body'],
-                'open': open,
-                'labels': labels,
-                'author': author
-            }
-            for k,v in updates.iteritems():
-                setattr(self, k, v)
-
-
-            # Get comments, and update them all.
-            gcs = github.api(token=token).get(self.linked_url(end='/comments')).json()
-            for gc in gcs:
-                # Clean up redundant/outdated comment.
-                c = next((c_ for c_ in self.comments if c_.github_id==gc['id']), 0)
-                if c:
-                    self.comments.remove(c)
-
-                c = comment.Comment()
-
-                c_author = user.User.objects(github_id=gc['user']['id']).first()
-                if not c_author:
-                    c_author = default_author
-
-                c_updates = {
-                        'github_id': gc['id'],
-                        'created_at': datetime.strptime(gc['created_at'], '%Y-%m-%dT%H:%M:%SZ'),
-                        'updated_at': datetime.strptime(gc['updated_at'], '%Y-%m-%dT%H:%M:%SZ'),
-                        'body': gc['body'],
-                        'author': c_author
-                }
-                for k,v in c_updates.iteritems():
-                    setattr(c, k, v)
-                self.comments.append(c)
-
-            # Get events,and update them all.
-            ges = github.api(token=token).get(self.linked_url(end='/events')).json()
-            for ge in ges:
-                # Clean up redundant/outdated event.
-                e = next((e_ for e_ in self.events if e_.github_id==ge['id']), 0)
-                if e:
-                    self.events.remove(e)
-
-                e = event.Event()
-
-                e_author = user.User.objects(github_id=ge['actor']['id']).first()
-                if not e_author:
-                    e_author = default_author
-
-                e_updates = {
-                        'github_id': ge['id'],
-                        'created_at': datetime.strptime(ge['created_at'], '%Y-%m-%dT%H:%M:%SZ'),
-                        'type': ge['event'],
-                        'author': e_author,
-                        'commit_id': ge['commit_id']
-                }
-                for k,v in e_updates.iteritems():
-                    setattr(e, k, v)
-                self.events.append(e)
+            self._sync_data(data=data)
+            self._sync_comments()
+            self._sync_events()
             self.save()
+
+    def _sync_data(self, data=None):
+        # Syncs issue data with its GitHub correlate (if it exists).
+        # Optionally pass in data to update with.
+        default_author = user.User.default()
+        token = self.project.author.github_access
+
+        if data is None:
+            data = github.api(token=token).get(self.linked_url()).json()
+
+        # Process data and apply it to the issue.
+        open = True if data['state'] == 'open' else False
+        labels = [label['name'] for label in data['labels']]
+        author = user.User.objects(github_id=data['user']['id']).first()
+        if not author:
+            author = default_author
+
+        updates = {
+            'created_at': datetime.strptime(data['created_at'], '%Y-%m-%dT%H:%M:%SZ'),
+            'updated_at': datetime.strptime(data['updated_at'], '%Y-%m-%dT%H:%M:%SZ'),
+            'title': data['title'],
+            'body': data['body'],
+            'open': open,
+            'labels': labels,
+            'author': author
+        }
+        for k,v in updates.iteritems():
+            setattr(self, k, v)
+
+    def _sync_comments(self):
+        # Get comments, and update them all.
+        default_author = user.User.default()
+        gcs = github.api(token=token).get(self.linked_url(end='/comments')).json()
+        for gc in gcs:
+            # Clean up redundant/outdated comment.
+            c = next((c_ for c_ in self.comments if c_.github_id==gc['id']), 0)
+            if c:
+                self.comments.remove(c)
+
+            c = comment.Comment()
+
+            c_author = user.User.objects(github_id=gc['user']['id']).first()
+            if not c_author:
+                c_author = default_author
+
+            c_updates = {
+                    'github_id': gc['id'],
+                    'created_at': datetime.strptime(gc['created_at'], '%Y-%m-%dT%H:%M:%SZ'),
+                    'updated_at': datetime.strptime(gc['updated_at'], '%Y-%m-%dT%H:%M:%SZ'),
+                    'body': gc['body'],
+                    'author': c_author
+            }
+            for k,v in c_updates.iteritems():
+                setattr(c, k, v)
+            self.comments.append(c)
+
+    def _sync_events(self):
+        # Get events,and update them all.
+        default_author = user.User.default()
+        ges = github.api(token=token).get(self.linked_url(end='/events')).json()
+        for ge in ges:
+            # Clean up redundant/outdated event.
+            e = next((e_ for e_ in self.events if e_.github_id==ge['id']), 0)
+            if e:
+                self.events.remove(e)
+
+            e = event.Event()
+
+            e_author = user.User.objects(github_id=ge['actor']['id']).first()
+            if not e_author:
+                e_author = default_author
+
+            e_updates = {
+                    'github_id': ge['id'],
+                    'created_at': datetime.strptime(ge['created_at'], '%Y-%m-%dT%H:%M:%SZ'),
+                    'type': ge['event'],
+                    'author': e_author,
+                    'commit_id': ge['commit_id']
+            }
+            for k,v in e_updates.iteritems():
+                setattr(e, k, v)
+            self.events.append(e)
 
     # Close the issue.
     def close(self):

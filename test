@@ -1,0 +1,3 @@
+#!/bin/bash
+
+HIVE_TESTING=true nosetests

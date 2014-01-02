@@ -33,6 +33,14 @@ $ python application.py
 
 Check out the site at `localhost:5000` (by default).
 
+## Testing
+
+To run tests, do:
+```
+$ ./test
+```
+This sets the `HIVE_TESTING` env var up so the test database is used.
+
 ## Deploying to Heroku
 The app is setup to be deployed to [Heroku](https://heroku.com).
 

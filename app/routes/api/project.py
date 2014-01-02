@@ -92,6 +92,7 @@ class ProjectAPI(MethodView):
         return jsonify({'success':True})
 
 register_api(ProjectAPI, 'project_api', '/p/', id='slug', id_type='string')
+app.add_url_rule('/', defaults={'slug': None}, view_func=ProjectAPI.as_view('index'), methods=['GET'])
 
 
 @app.route('/new')

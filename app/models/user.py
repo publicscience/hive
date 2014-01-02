@@ -21,17 +21,16 @@ class User(db.Document):
     @classmethod
     def default(cls):
         # Return a default user.
-        return User.objects(github_id=0).first()
-
-# Create the default Github user.
-if not User.objects(google_id='0'):
-    user = User(
-            google_id='0',
-            github_id=0,
-            name='A pal on Github',
-            picture='http://localhost:5000/assets/img/github_pal.png'
-    )
-    user.save()
+        def_user = User.objects(github_id=0).first()
+        if not def_user:
+            def_user = User(
+                    google_id='0',
+                    github_id=0,
+                    name='A pal on Github',
+                    picture='http://localhost:5000/assets/img/github_pal.png'
+            )
+            def_user.save()
+        return def_user
 
 def current_user():
     """
@@ -58,7 +57,6 @@ def current_user():
         user, created = User.objects.get_or_create(google_id=g_user['id'])
         user.name = g_user['name']
         user.picture = g_user.get('picture', url_for('static', filename='/assets/img/default_pic.png', _external=True))
-        print(user.picture)
         user.save()
         session['user_id'] = g_user['id']
     else:
