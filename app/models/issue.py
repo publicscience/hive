@@ -51,7 +51,7 @@ class Issue(Note):
                 'labels': self.labels
             }))
             if resp.status_code != 200:
-                raise Exception()
+                raise Exception('Error updating issue on GitHub.')
 
         # Create issue on GitHub if flag is present.
         elif '%github' in self.body:
@@ -62,7 +62,7 @@ class Issue(Note):
                 'labels': self.labels
             }))
             if resp.status_code != 201:
-                raise Exception()
+                raise Exception('Error creating issue on GitHub.')
 
             self.github_id = resp.json()['number']
 
