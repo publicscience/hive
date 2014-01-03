@@ -6,9 +6,16 @@
             <li class="js-parent">
                 <img src="{{ aurl['thumb'] }}" data-full="{{ aurl['full'] }}" class="js-lightboxable"> 
                 {% if owner %}
-                    <a href="{{ url_for('attachment_api', slug=attachment.project.slug, id=attachment.id) }}" data-method="delete">delete</a>
+                <span class="attachment--actions"><a href="{{ url_for('attachment_api', slug=attachment.project.slug, id=attachment.id) }}" data-method="delete">delete</a></span>
                 {% endif %}
             </li>
         {% endfor %}
+    </ul>
+{%- endmacro %}
+
+{% macro form() -%}
+    <ul class="form--attachments">
+        <li><h6>Attachments</h6></li>
+        <li class="input"><input type="file" name="file0"></li>
     </ul>
 {%- endmacro %}

@@ -966,17 +966,28 @@ nav {
   margin: 0.8em 0; }
 
 .issue--actions,
-.comment--actions {
+.comment--actions,
+.attachment--actions {
   font-size: 0.75em;
-  color: #cccccc;
+  color: #cccccc; }
+  .issue--actions a, .issue--actions a:visited,
+  .comment--actions a,
+  .comment--actions a:visited,
+  .attachment--actions a,
+  .attachment--actions a:visited {
+    color: #cccccc;
+    text-decoration: underline; }
+
+.issue--actions,
+.comment--actions {
   text-align: right;
   padding: 0.5em 0;
   margin: 1em 0 0 0; }
-  .issue--actions a, .issue--actions a:visited,
-  .comment--actions a,
-  .comment--actions a:visited {
-    color: #cccccc;
-    text-decoration: underline; }
+
+.attachment--actions {
+  padding: 0 0 0 0.5em; }
+  .attachment--actions a {
+    vertical-align: top; }
 
 .mention-target {
   display: none; }
@@ -1025,8 +1036,17 @@ nav {
     background: white;
     margin: 8em 0 4em 0; }
 
+.attachments li {
+  margin: 0 0 1em 0; }
 .attachments img {
-  cursor: pointer; }
+  cursor: pointer;
+  border: 1px solid #f1f1f1; }
+
+.form--attachments {
+  font-size: 0.75em;
+  margin: 0 0 4em 0; }
+  .form--attachments .input {
+    margin: 0 0 1em 0; }
 
 @media only screen and (max-width: 720px) {
   .issue, .project {

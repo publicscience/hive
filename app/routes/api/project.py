@@ -8,7 +8,7 @@ from . import register_api
 from flask.ext.mongoengine.wtf import model_form
 from datetime import datetime
 
-project_form = model_form(Project, exclude=['created_at', 'users', 'issues', 'slug', 'author'])
+project_form = model_form(Project, exclude=['created_at', 'users', 'issues', 'slug', 'author', 'folder_id', 'attachments'])
 
 class ProjectAPI(MethodView):
     def get_context(self, slug=None):
@@ -50,7 +50,6 @@ class ProjectAPI(MethodView):
         if form.validate():
             project = Project()
             form.populate_obj(project)
-            project.author = current_user()
             project.users = User.objects.all() # for now, all users are on the projects
 
             # Check that repo exists and that the user can access it.

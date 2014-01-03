@@ -20,6 +20,10 @@
             {% else %}
                 {{ issue.parsed()|safe }}
             {% endif %}
+            {% if issue.attachments %}
+                {% set owner = issue.author.id == current_user.id %}
+                {{ attachments.render(issue.attachments, owner) }}
+            {% endif %}
         </div>
         <ul class='issue--meta'>
             {% if issue.github_id %}
@@ -124,10 +128,7 @@
                 <div>
                     <textarea class="mention"></textarea>
                 </div>
-                <button class="attach">Attach</button>
-                <div class="form--attachments">
-                    <input type="file" name="file">
-                </div>
+                {{ attachments.form() }}
                 <div class="actions">
                     <input type="submit" class="open" value="Comment">
                 </div>

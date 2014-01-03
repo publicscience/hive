@@ -7,7 +7,7 @@ from app.models import Issue, Comment, Event, Project
 from . import register_api
 from flask.ext.mongoengine.wtf import model_form
 
-issue_form = model_form(Issue, exclude=['created_at', 'author', 'comments', 'project', 'open', 'github_id'])
+issue_form = model_form(Issue, exclude=['created_at', 'updated_at', 'author', 'comments', 'project', 'open', 'github_id', 'mentions', 'attachments'])
 
 class IssueAPI(MethodView):
 
@@ -34,7 +34,7 @@ class IssueAPI(MethodView):
             return render_template('issue/list.html', issues=issues, project=project)
         # Detail view
         else:
-            comment_form = model_form(Comment, exclude=['created_at', 'author'])
+            comment_form = model_form(Comment, exclude=['created_at', 'updated_at', 'author', 'mentions', 'attachments'])
             form = comment_form(request.form)
 
             issue = ctx['issue']
@@ -156,7 +156,8 @@ def label_issues(slug, label):
 def _process_issue(issue, form, request):
     try:
         form.populate_obj(issue)
-        issue.process(request.form)
+        print(request.files)
+        issue.process(request.form, request.files)
     except KeyError as e:
         flash('We weren\'t able to link with GitHub. Try authenticating.')
         return redirect(url_for('github_info'))

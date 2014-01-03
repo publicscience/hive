@@ -3,7 +3,7 @@ from datetime import datetime
 from app.util import ago
 
 class Event(db.EmbeddedDocument):
-    created_at = db.DateTimeField(default=datetime.utcnow(), required=True)
+    created_at = db.DateTimeField(default=datetime.utcnow, required=True)
     type = db.StringField(required=True, max_length=255)
     author = db.ReferenceField('User')
     github_id = db.IntField()

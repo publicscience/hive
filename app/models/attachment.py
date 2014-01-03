@@ -2,9 +2,10 @@ from app import db
 from datetime import datetime
 from app.util import ago
 from app.routes.oauth import google
+from mongoengine import signals
 
 class Attachment(db.Document):
-    created_at = db.DateTimeField(default=datetime.utcnow(), required=True)
+    created_at = db.DateTimeField(default=datetime.utcnow, required=True)
     file_id = db.StringField(required=True)
     project = db.ReferenceField('Project', required=True)
     parent = db.GenericReferenceField()
@@ -21,9 +22,16 @@ class Attachment(db.Document):
             'thumb': file.get('thumbnailLink')
         }
 
-    def destroy(self):
-        drive = google.drive_api(creds=self.project.author.google_creds)
-        self.project.attachments.remove(self)
-        self.parent.attachments.remove(self)
-        drive.files().delete(fileId=self.file_id).execute()
-        self.delete()
+    @classmethod
+    def pre_delete(cls, sender, document, **kwargs):
+        drive = google.drive_api(creds=document.project.author.google_creds)
+
+        document.project.attachments.remove(document)
+        document.project.save()
+
+        document.parent.attachments.remove(document)
+        document.parent.save()
+
+        drive.files().delete(fileId=document.file_id).execute()
+
+signals.pre_delete.connect(Attachment.pre_delete, sender=Attachment)

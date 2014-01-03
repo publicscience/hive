@@ -1,8 +1,9 @@
+{% import "_attachments.html" as attachments %}
 {% extends 'layout.html' %}
 {% block content %}
 
 <h6>Open a new issue</h6>
-<form action="." method="post" class="js-preprocess">
+<form action="." method="post" class="js-preprocess" enctype="multipart/form-data">
     {{ form.csrf_token }}
     <div class="field">
         {{ form.title(autofocus=True, placeholder='Issue title') }}
@@ -20,6 +21,9 @@
     </div>
     <div class="field">
         <input type="text" name="labels" id="labels" placeholder="Comma-separated labels">
+    </div>
+    <div class="field">
+        {{ attachments.form() }}
     </div>
     <div class="actions">
         <input type="submit" class="open" value="Create new issue">

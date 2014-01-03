@@ -192,15 +192,24 @@ nav
     margin: 0.8em 0
 
 .issue--actions,
-.comment--actions
+.comment--actions,
+.attachment--actions
     font-size: 0.75em
     color: $muted-color
-    text-align: right
-    padding: 0.5em 0
-    margin: 1em 0 0 0
     a, a:visited
         color: $muted-color
         text-decoration: underline
+
+.issue--actions,
+.comment--actions
+    text-align: right
+    padding: 0.5em 0
+    margin: 1em 0 0 0
+
+.attachment--actions
+    padding: 0 0 0 0.5em
+    a
+        vertical-align: top
 
 .mention-target
     display: none
@@ -250,8 +259,16 @@ nav
         margin: 8em 0 4em 0
 
 .attachments
+    li
+        margin: 0 0 1em 0
     img
         cursor: pointer
+        border: 1px solid #f1f1f1
+.form--attachments
+    font-size: 0.75em
+    margin: 0 0 4em 0
+    .input
+        margin: 0 0 1em 0
 
 @media only screen and (max-width: 720px)
     .issue, .project

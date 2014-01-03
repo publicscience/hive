@@ -1,20 +1,23 @@
-from app import db
+from app import db, app
 from slugify import slugify
 from mongoengine import signals
 from app.routes.oauth import github, google
+from app.models.user import current_user
 from datetime import datetime
 from . import issue
 from apiclient.http import MediaFileUpload
 from app.models.attachment import Attachment
+from werkzeug import secure_filename
+import os
 
 class Project(db.Document):
-    created_at = db.DateTimeField(default=datetime.utcnow(), required=True)
-    updated_at = db.DateTimeField(default=datetime.utcnow(), required=True)
+    created_at = db.DateTimeField(default=datetime.utcnow, required=True)
+    updated_at = db.DateTimeField(default=datetime.utcnow, required=True)
     name = db.StringField(max_length=255, required=True, unique=True)
     repo = db.StringField(max_length=255)
     slug = db.StringField(max_length=255)
     issues = db.ListField(db.ReferenceField('Issue'))
-    author = db.ReferenceField('User')
+    author = db.ReferenceField('User', default=current_user, required=True)
 
     # Google Drive Folder id
     folder_id = db.StringField()
@@ -24,9 +27,7 @@ class Project(db.Document):
     # Not being used yet but later there may be need for this.
     users = db.ListField(db.ReferenceField('User'))
 
-
     meta = {
-            'allow_inheritance': True,
             'indexes': ['-created_at'],
             'ordering': ['updated_at']
     }
@@ -64,6 +65,28 @@ class Project(db.Document):
         token = self.author.github_access
         resp = github.api(token=token).get('/repos/'+self.repo)
         return resp.status_code == 200
+
+    def process_attachments(self, files, parent):
+        for k, file in files.iteritems():
+            filename = file.filename
+            if file and \
+                    '.' in filename and \
+                    filename.split('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']:
+                filename = secure_filename(filename)
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
+
+                file_id = self.upload_file(filepath)
+                attachment = Attachment(file_id=file_id)
+                attachment.project = self
+                attachment.parent = parent
+                attachment.save()
+
+                self.attachments.append(attachment)
+                self.save()
+
+                parent.attachments.append(attachment)
+                parent.save()
 
     # Create a Google Drive folder for this project.
     def create_folder(self):
@@ -110,13 +133,7 @@ class Project(db.Document):
                 'parents': [{'id': self.folder_id}]
         }
         file = drive.files().insert(body=body, media_body=media_body).execute()
-        attachment = Attachment(file_id=file['id'])
-        attachment.project = self
-        attachment.save()
-
-        self.attachments.append(attachment)
-        self.save()
-        return attachment
+        return file['id']
 
     @classmethod
     def pre_delete(cls, sender, document, **kwargs):

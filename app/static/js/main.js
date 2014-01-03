@@ -77,6 +77,24 @@ require(['config'], function() {
         $('.overlay').on('click', function() {
             $(this).fadeOut();
         });
+
+        $('.form--attachments').on('change', 'input[type=file]', function() {
+            if ( $(this).val() ) {
+                var el = $(this).closest('.input'),
+                    idx = el.index();
+                if ( el.find('.js-clear-input').length === 0 ) {
+                    el.append('<a class="js-clear-input" href="#">delete</a>');
+                }
+                $(this).closest('.form--attachments').append('<li class="input"><input type="file" name="file'+idx.toString()+'"></li>');
+            }
+        });
+
+        $('form').on('click', '.js-clear-input', function(e) {
+            e.preventDefault();
+            $(this).closest('.input').find('input').val('');
+            $(this).remove();
+            return false;
+        });
     });
 
 });

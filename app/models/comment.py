@@ -1,59 +1,41 @@
 from app import db
-from gfm import markdown
-from app.util import ago, parse_markup, parse_mentions
 from app.routes.oauth import github
-from . import event, user
-from datetime import datetime
+import json
 from flask import url_for
-from bson.objectid import ObjectId
+from app.models.note import Note
+from mongoengine import signals
 
-class Comment(db.EmbeddedDocument):
-    id = db.ObjectIdField(required=True, default=ObjectId, unique=True)
-    created_at = db.DateTimeField(default=datetime.utcnow(), required=True)
-    updated_at = db.DateTimeField(default=datetime.utcnow(), required=True)
-    body = db.StringField(verbose_name="Comment", required=True)
-    author = db.ReferenceField('User')
+class Comment(Note):
+    body = db.StringField(required=True)
     github_id = db.IntField()
-    mentions = db.ListField(db.ReferenceField('User'))
-    attachments = db.ListField(db.ReferenceField('Attachment'))
+    issue = db.ReferenceField('Issue')
 
-    # Called prior to saving.
-    def clean(self):
-        self.updated_at = datetime.utcnow()
+    def process(self, issue, files):
+        self.save()
+        self.parse_mentions()
+        self.issue = issue
 
-    def ago(self):
-        return ago(time=self.created_at)
+        # Create comment on GitHub if its issue is linked.
+        if issue.linked():
+            url = '/repos/' + issue.project.repo + '/issues/' + str(issue.github_id) + '/comments'
+            resp = github.api().post(url, data=json.dumps({'body':self.body}))
+            self.github_id = resp.json()['id']
+        self.save()
 
-    # GitHub flavorted Markdown & mention parsing.
-    def parsed(self):
-        parsed = self.body
-        parsed = parse_markup(parsed)
-        return markdown(parsed)
+        # Parse and create references to other issues.
+        issue.parse_references(self.body)
 
-    def process(self):
-        # Parse out mentions and find authors.
-        current_mentioned_ids = set([e.google_id for e in self.mentions])
-        mentioned_ids = set([match.group('id') for match in parse_mentions(self.body)])
-        new_mentions = mentioned_ids - current_mentioned_ids
-        old_mentions = current_mentioned_ids - mentioned_ids
+        self.issue.project.process_attachments(files, self)
 
-        # Add in new mentions.
-        for id in new_mentions:
-            u = user.User.objects(google_id=id).first()
-            if u:
-                self.mentions.append(u)
-                u.references.append(self) # Add issue to the user as well
+        issue.comments.append(self)
+        issue.save()
 
-        # Remove mentions that are gone now.
-        for id in old_mentions:
-            u = next((u_ for u_ in self.mentions if u_.google_id==id), 0)
-            if u:
-                self.mentions.remove(u)
-                u.references.remove(self) # Remove from the user as well
-
-    def destroy(self):
+    @classmethod
+    def pre_delete(cls, sender, document, **kwargs):
         # Have to manually clean up references to this comment.
-        for u in self.mentions:
+        for u in document.mentions:
             u.references = [r for r in u.references if r != self]
+            u.save()
+        self.issue.delete_comment(self.id)
 
-
+signals.pre_delete.connect(Comment.pre_delete, sender=Comment)

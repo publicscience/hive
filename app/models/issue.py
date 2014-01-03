@@ -1,44 +1,31 @@
 from app import db
-from gfm import markdown
-from app.util import ago, parse_markup, parse_mentions, parse_issues
+from app.util import parse_issues
 from app.routes.oauth import github
 from . import event, user, comment
 from datetime import datetime
 import json
 from mongoengine import signals
-from flask import url_for
+from app.models.note import Note
 
-class Issue(db.Document):
-    created_at = db.DateTimeField(default=datetime.utcnow(), required=True)
-    updated_at = db.DateTimeField(default=datetime.utcnow(), required=True)
+class Issue(Note):
     title = db.StringField(max_length=255, required=True, default='New Issue')
-    body = db.StringField(verbose_name='Issue', default='')
-    author = db.ReferenceField('User')
-    comments = db.ListField(db.EmbeddedDocumentField(comment.Comment))
+    comments = db.ListField(db.ReferenceField('Comment'))
     events = db.ListField(db.EmbeddedDocumentField(event.Event))
     labels = db.ListField(db.StringField(max_length=50))
     open = db.BooleanField(default=True)
     project = db.ReferenceField('Project')
     github_id = db.IntField()
-    mentions = db.ListField(db.ReferenceField('User'))
     references = db.ListField(db.ReferenceField('self'))
-    attachments = db.ListField(db.ReferenceField('Attachment'))
 
     meta = {
-            'allow_inheritance': True,
             'indexes': ['-created_at', 'author'],
             'ordering': ['updated_at']
     }
 
-    # Called prior to saving.
-    def clean(self):
-        self.updated_at = datetime.utcnow()
 
     # Handle some additional processing.
-    def process(self, data):
+    def process(self, data, files):
         self.labels = [label.strip() for label in data.get('labels').split(',') if label]
-        self.author = user.current_user()
-
         self.save()
 
         # Creates/updates a corresponding GitHub issue if conditions are met.
@@ -51,6 +38,8 @@ class Issue(db.Document):
         # Process references to other issues.
         # This has to happen after saving so the issue has an ID.
         self.parse_references(self.body)
+
+        self.project.process_attachments(files, self)
 
     def push_to_github(self):
         # Update corresponding GitHub issue.
@@ -77,30 +66,6 @@ class Issue(db.Document):
 
             self.github_id = resp.json()['number']
 
-    def parse_mentions(self):
-        # Parse out mentions and find authors.
-        current_mentioned_ids = set([e.google_id for e in self.mentions])
-        mentioned_ids = set([(match.group('id')) for match in parse_mentions(self.body)])
-        new_mentions = mentioned_ids - current_mentioned_ids
-        old_mentions = current_mentioned_ids - mentioned_ids
-
-        # Add in new mentions.
-        for id in new_mentions:
-            u = user.User.objects(google_id=id).first()
-            if u:
-                self.mentions.append(u)
-                u.references.append(self) # Add issue to the user as well
-                u.save()
-
-        # Remove mentions that are gone now.
-        for id in old_mentions:
-            u = next((u_ for u_ in self.mentions if u_.google_id==id), 0)
-            if u:
-                self.mentions.remove(u)
-                u.references.remove(self) # Remove from the user as well
-                u.save()
-        self.save()
-
     def parse_references(self, text):
         # Process references to other issues.
         referenced_issue_ids = parse_issues(text)
@@ -125,6 +90,7 @@ class Issue(db.Document):
         # Have to manually clean up references to this issue.
         for u in document.mentions:
             u.references = [r for r in u.references if r != self]
+            u.save()
         for c in document.comments:
             c.delete()
 
@@ -138,7 +104,6 @@ class Issue(db.Document):
     # Optionally pass in data to update with.
     def sync(self, data=None):
         if self.linked() and self.project.linked():
-
             self._sync_data(data=data)
             self._sync_comments()
             self._sync_events()
@@ -256,15 +221,6 @@ class Issue(db.Document):
         all_events.sort(key=lambda i:i.created_at)
         return all_events
 
-    def ago(self):
-        return ago(time=self.created_at)
-
-    # GitHub flavored Markdown & mention parsing.
-    def parsed(self):
-        parsed = self.body
-        parsed = parse_markup(parsed)
-        return markdown(parsed)
-
     # Most recent closed event.
     def last_closed_event(self):
         return next((e for e in reversed(self.events) if e.type=='closed'), None)
@@ -278,7 +234,6 @@ class Issue(db.Document):
 
     def delete_comment(self, id):
         c = self.find_comment(id)
-        c.destroy()
         self.comments.remove(c)
         self.save()
 
