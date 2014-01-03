@@ -9,6 +9,7 @@ Werkzeug==0.9.4
 blinker==1.3
 flask-mongoengine==0.7.0
 gfm==0.0.2
+google-api-python-client==1.2
 gunicorn==18.0
 httplib2==0.8
 itsdangerous==0.23
