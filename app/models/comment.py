@@ -15,6 +15,7 @@ class Comment(db.EmbeddedDocument):
     author = db.ReferenceField('User')
     github_id = db.IntField()
     mentions = db.ListField(db.ReferenceField('User'))
+    attachments = db.ListField(db.ReferenceField('Attachment'))
 
     # Called prior to saving.
     def clean(self):

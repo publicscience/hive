@@ -233,6 +233,26 @@ nav
     margin: 0 1em
     padding: 0.2em 0.4em
 
+.overlay
+    width: 100%
+    height: 100%
+    position: fixed
+    z-index: 100
+    top: 0
+    left: 0
+    background: rgba(0,0,0,0.6)
+    overflow-y: scroll
+    display: none
+.lightbox
+    text-align: center
+    img
+        background: #fff
+        margin: 8em 0 4em 0
+
+.attachments
+    img
+        cursor: pointer
+
 @media only screen and (max-width: 720px)
     .issue, .project
         width: 100%

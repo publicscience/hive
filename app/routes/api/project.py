@@ -62,6 +62,9 @@ class ProjectAPI(MethodView):
                     form.repo.errors = ['Can\'t access this repo.']
                     return render_template('project/new.html', form=form)
 
+            # Create a Google Drive Folder for this project on its authors account.
+            project.create_folder()
+
             project.save()
             flash('The <b>%s</b> project was successfully summoned.' % project.name)
             return redirect(url_for('project_api', slug=project.slug, _method='GET'))

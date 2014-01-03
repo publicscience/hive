@@ -1,0 +1,14 @@
+{% macro render(attachments, owner) -%}
+    <h6>Attachments</h6>
+    <ul class="attachments">
+        {% for attachment in attachments %}
+            {% set aurl = attachment.url() %}
+            <li class="js-parent">
+                <img src="{{ aurl['thumb'] }}" data-full="{{ aurl['full'] }}" class="js-lightboxable"> 
+                {% if owner %}
+                    <a href="{{ url_for('attachment_api', slug=attachment.project.slug, id=attachment.id) }}" data-method="delete">delete</a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{%- endmacro %}

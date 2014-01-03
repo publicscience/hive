@@ -22,6 +22,7 @@ class Issue(db.Document):
     github_id = db.IntField()
     mentions = db.ListField(db.ReferenceField('User'))
     references = db.ListField(db.ReferenceField('self'))
+    attachments = db.ListField(db.ReferenceField('Attachment'))
 
     meta = {
             'allow_inheritance': True,
@@ -124,6 +125,8 @@ class Issue(db.Document):
         # Have to manually clean up references to this issue.
         for u in document.mentions:
             u.references = [r for r in u.references if r != self]
+        for c in document.comments:
+            c.delete()
 
     # Corresponding GitHub endpoint for this issue.
     def linked_url(self, end=''):
@@ -256,7 +259,7 @@ class Issue(db.Document):
     def ago(self):
         return ago(time=self.created_at)
 
-    # GitHub flavorted Markdown & mention parsing.
+    # GitHub flavored Markdown & mention parsing.
     def parsed(self):
         parsed = self.body
         parsed = parse_markup(parsed)

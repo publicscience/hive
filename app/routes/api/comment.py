@@ -5,7 +5,12 @@ from flask import redirect, request, url_for, jsonify, flash
 from flask.views import MethodView
 from app.models import Issue, Comment
 from flask.ext.mongoengine.wtf import model_form
-import json
+import json, os
+from werkzeug import secure_filename
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
 
 class CommentAPI(MethodView):
     form = model_form(Comment, exclude=['created_at', 'id'])
@@ -20,6 +25,17 @@ class CommentAPI(MethodView):
             form.populate_obj(comment)
             comment.author = current_user()
             comment.process()
+
+            # Handle newly uploaded files.
+            for k, file in request.files.iteritems():
+                if file and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    file.save(filepath)
+                    attachment = issue.project.upload_file(filepath)
+                    comment.attachments.append(attachment)
+                    attachment.parent = comment
+                    attachment.save()
 
             if issue.linked():
                 # Create comment on GitHub

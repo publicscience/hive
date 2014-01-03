@@ -6,10 +6,12 @@ from app.routes.oauth import google
 class User(db.Document):
     created_at = db.DateTimeField(default=datetime.datetime.utcnow(), required=True)
     name = db.StringField(max_length=255)
+    email = db.EmailField(required=True)
     picture = db.URLField()
     google_id = db.StringField(required=True, unique=True)
     github_id = db.IntField() # note: setting unique=True automatically sets required=True
     github_access = db.StringField()
+    google_creds = db.StringField()
 
     # When A mentions B, B is referenced by A.
     references = db.ListField(db.GenericReferenceField())
@@ -46,15 +48,15 @@ def current_user():
      "link": "https://plus.google.com/...",
      "picture": "https://lh6.googleusercontent.com/...",
      "gender": "male",
-     "locale": "en"
+     "locale": "en",
+     "email": "someemail@gmail.com"
     }
     """
 
     if not session.get('user_id', False):
         # Get and store user info in session.
-        response = google.api().get('https://www.googleapis.com/oauth2/v1/userinfo?')
-        g_user = response.json()
-        user, created = User.objects.get_or_create(google_id=g_user['id'])
+        g_user = google.user_info()
+        user, created = User.objects.get_or_create(google_id=g_user['id'], email=g_user['email'])
         user.name = g_user['name']
         user.picture = g_user.get('picture', url_for('static', filename='/assets/img/default_pic.png', _external=True))
         user.save()

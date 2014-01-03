@@ -2,6 +2,9 @@ CSRF_ENABLED = True
 SECRET_KEY = 'some-passphrase'
 MONGODB_SETTINGS = {'DB': 'pubsci_hive'}
 
+UPLOAD_FOLDER = '/tmp/'
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+
 AUTH_USER = 'admin'
 AUTH_PASS = 'password'
 

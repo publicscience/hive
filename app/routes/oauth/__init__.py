@@ -8,7 +8,7 @@ def logout():
     """
     Destroy access tokens/session data.
     """
-    session.pop('google_access_token', None)
+    session.pop('google_creds', None)
     session.pop('user_id', None)
     session.pop('github_access_token', None)
     return redirect('/')
@@ -20,7 +20,7 @@ def requires_login(f):
     @wraps(f)
     @requires_auth
     def decorated(*args, **kwargs):
-        if session.get('google_access_token') is None:
+        if session.get('google_creds') is None:
             return redirect(url_for('google_login'))
         return f(*args, **kwargs)
     return decorated

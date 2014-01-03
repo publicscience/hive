@@ -1,3 +1,4 @@
+{% import "_attachments.html" as attachments %}
 {% extends 'layout.html' %}
 {% block content %}
 
@@ -84,6 +85,10 @@
                         {% else %}
                             {{ event.parsed()|safe }}
                         {% endif %}
+                        {% if event.attachments %}
+                            {% set owner = event.author.id == current_user.id %}
+                            {{ attachments.render(event.attachments, owner) }}
+                        {% endif %}
                     </div>
                 </div>
                 {% elif event.type == 'closed' %}
@@ -113,11 +118,15 @@
         {% endfor %}
 
         {% if not issue.github_id or current_user.github_id %}
-            <form action="comments" method="post" class='js-preprocess'>
-                {{ form.csrf_token }} 
+            <form action="comments" method="post" class='js-preprocess' enctype="multipart/form-data">
+                {{ form.csrf_token }}
                 {{ form.body(class="mention-target") }}
                 <div>
                     <textarea class="mention"></textarea>
+                </div>
+                <button class="attach">Attach</button>
+                <div class="form--attachments">
+                    <input type="file" name="file">
                 </div>
                 <div class="actions">
                     <input type="submit" class="open" value="Comment">

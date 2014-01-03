@@ -67,6 +67,16 @@ require(['config'], function() {
                 });
             });
         });
+
+        $('.js-lightboxable').on('click', function() {
+            var full_url = $(this).data('full');
+            $('.overlay').fadeIn();
+            $('.lightbox').html('<img src="'+full_url+'">');
+        });
+
+        $('.overlay').on('click', function() {
+            $(this).fadeOut();
+        });
     });
 
 });

@@ -9,4 +9,4 @@ def register_api(view, endpoint, url, id='id', id_type='int'):
     app.add_url_rule(url, view_func=view_func, methods=['POST'])
     app.add_url_rule('%s<%s:%s>/' % (url, id_type, id), view_func=view_func, methods=['GET', 'PUT', 'DELETE'])
 
-from . import comment, issue, project, user
+from . import comment, issue, project, user, attachment

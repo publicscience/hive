@@ -9,6 +9,9 @@ DEBUG = True
 CSRF_ENABLED = True
 SECRET_KEY = env['SECRET_KEY']
 
+UPLOAD_FOLDER = '/tmp/'
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
+
 # Using MongoHQ on Heroku.
 # Ref: https://devcenter.heroku.com/articles/mongohq
 # Visit your application on Heroku's dashboard and navigate

@@ -1,15 +1,13 @@
 from app import app
 from flask import redirect, url_for, flash, session, request
-from rauth.service import OAuth2Service
-import json
+from oauth2client.client import OAuth2WebServerFlow, Credentials
+from apiclient.discovery import build
+import json, httplib2
 
-google = OAuth2Service(
-    name='google',
-    base_url='https://www.google.com/accounts/',
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
-    access_token_url='https://accounts.google.com/o/oauth2/token',
+flow = OAuth2WebServerFlow(
     client_id=app.config['GOOGLE_CLIENT_ID'],
-    client_secret=app.config['GOOGLE_CLIENT_SECRET']
+    client_secret=app.config['GOOGLE_CLIENT_SECRET'],
+    scope='https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
 )
 
 @app.route('/login')
@@ -18,10 +16,8 @@ def google_login():
     Passes client to Google to authenticate
     with their Google account.
     """
-    redirect_uri = url_for('google_authorized', _external=True)
-    scope = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile'
-    response_type = 'code'
-    return redirect(google.get_authorize_url(redirect_uri=redirect_uri, scope=scope, response_type=response_type))
+    flow.redirect_uri=url_for('google_authorized', _external=True)
+    return redirect(flow.step1_get_authorize_url())
 
 # After authentication.
 @app.route(app.config['GOOGLE_REDIRECT_URI'])
@@ -35,15 +31,40 @@ def google_authorized():
         flash(u'Whoops, you denied us access to your Google account')
         return redirect(url_for('google_login'))
 
-    redirect_uri = url_for('google_authorized', _external=True)
-    data = dict(code=request.args['code'], grant_type='authorization_code', redirect_uri=redirect_uri)
-    session_ = google.get_auth_session(data=data, decoder=json.loads)
+    credentials = flow.step2_exchange(request.args['code'])
 
     # Store access token in session.
-    session['google_access_token'] = session_.access_token
+    session['google_creds'] = credentials.to_json()
+
+    from app.models.user import current_user
+    user = current_user()
+    user.google_creds = credentials.to_json()
+    user.save()
 
     # Redirect
     return redirect('/')
 
-def api():
-    return google.get_session(token=session['google_access_token'])
+def user_info(creds=None):
+    if creds is None:
+        creds = session['google_creds']
+    creds = Credentials.new_from_json(creds)
+    user_info_service = build('oauth2', 'v2', http=creds.authorize(httplib2.Http()))
+    user_info = user_info_service.userinfo().get().execute()
+    if user_info and user_info.get('id'):
+        return user_info
+
+def drive_api(creds=None):
+    if creds is None:
+        creds = session['google_creds']
+    creds = Credentials.new_from_json(creds)
+    return build('drive', 'v2', http=creds.authorize(httplib2.Http()))
+
+def delete_file(file):
+    pass
+
+def create_document(name):
+    pass
+
+def delete_document(name):
+    pass
+
