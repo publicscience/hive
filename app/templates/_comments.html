@@ -1,0 +1,26 @@
+{% import "_attachments.html" as attachments %}
+
+{% macro render(comment, current_user) -%}
+    <div class="issue--event js-parent">
+        <div class="comment--meta">
+            <img src="{{ comment.author.picture }}" class="thumb"> {{ comment.author.name }} <span class="meta--time">{{ comment.ago() }}</span>
+        </div>
+        <div class="comment--body body">
+            {% if comment.author.id == current_user.id %}
+                <div class="js-editable" data-raw="{{comment.body}}">
+                    {{ comment.parsed()|safe }}
+                </div>
+                <ul class="comment--actions list__horizontal">
+                    <li><a href="{{ url_for('comment_api', slug=comment.issue.project.slug, issue_id=comment.issue.id, id=comment.id) }}" data-action="edit">edit</a></li>
+                    <li><a href="{{ url_for('comment_api', slug=comment.issue.project.slug, issue_id=comment.issue.id, id=comment.id) }}" data-method="delete">delete</a></li>
+                </ul>
+            {% else %}
+                {{ comment.parsed()|safe }}
+            {% endif %}
+            {% if comment.attachments %}
+                {% set owner = comment.author.id == current_user.id %}
+                {{ attachments.render(comment.attachments, owner) }}
+            {% endif %}
+        </div>
+    </div>
+{%- endmacro %}

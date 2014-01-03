@@ -8,27 +8,31 @@ from mongoengine import signals
 class Comment(Note):
     body = db.StringField(required=True)
     github_id = db.IntField()
-    issue = db.ReferenceField('Issue')
+    issue = db.ReferenceField('Issue', required=True)
 
-    def process(self, issue, files):
+    def process(self, files):
         self.save()
         self.parse_mentions()
-        self.issue = issue
 
         # Create comment on GitHub if its issue is linked.
-        if issue.linked():
-            url = '/repos/' + issue.project.repo + '/issues/' + str(issue.github_id) + '/comments'
-            resp = github.api().post(url, data=json.dumps({'body':self.body}))
-            self.github_id = resp.json()['id']
+        if self.issue.linked():
+            if self.github_id:
+                # UPDATE GITHUB COMMENT
+                pass
+            else:
+                url = '/repos/' + self.issue.project.repo + '/issues/' + str(issue.github_id) + '/comments'
+                resp = github.api().post(url, data=json.dumps({'body':self.body}))
+                self.github_id = resp.json()['id']
         self.save()
 
         # Parse and create references to other issues.
-        issue.parse_references(self.body)
+        self.issue.parse_references(self.body)
 
         self.issue.project.process_attachments(files, self)
 
-        issue.comments.append(self)
-        issue.save()
+        if self not in self.issue.comments:
+            self.issue.comments.append(self)
+        self.issue.save()
 
     @classmethod
     def pre_delete(cls, sender, document, **kwargs):

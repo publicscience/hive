@@ -156,7 +156,6 @@ def label_issues(slug, label):
 def _process_issue(issue, form, request):
     try:
         form.populate_obj(issue)
-        print(request.files)
         issue.process(request.form, request.files)
     except KeyError as e:
         flash('We weren\'t able to link with GitHub. Try authenticating.')

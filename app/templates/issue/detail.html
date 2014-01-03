@@ -1,4 +1,5 @@
 {% import "_attachments.html" as attachments %}
+{% import "_comments.html" as comments %}
 {% extends 'layout.html' %}
 {% block content %}
 
@@ -73,28 +74,7 @@
         {% for event in events %}
             <div>
                 {% if event.body %}
-                <div class="issue--event js-parent">
-                    <div class="comment--meta">
-                        <img src="{{ event.author.picture }}" class="thumb"> {{ event.author.name }} <span class="meta--time">{{ event.ago() }}</span>
-                    </div>
-                    <div class="comment--body body">
-                        {% if event.author.id == current_user.id %}
-                            <div class="js-editable">
-                                {{ event.parsed()|safe }}
-                            </div>
-                            <ul class="comment--actions list__horizontal">
-                                <li><a href="{{ url_for('comment_api', slug=issue.project.slug, issue_id=issue.id, id=event.id) }}" data-action="edit">edit</a></li>
-                                <li><a href="{{ url_for('comment_api', slug=issue.project.slug, issue_id=issue.id, id=event.id) }}" data-method="delete">delete</a></li>
-                            </ul>
-                        {% else %}
-                            {{ event.parsed()|safe }}
-                        {% endif %}
-                        {% if event.attachments %}
-                            {% set owner = event.author.id == current_user.id %}
-                            {{ attachments.render(event.attachments, owner) }}
-                        {% endif %}
-                    </div>
-                </div>
+                    {{ comments.render(event, current_user) }}
                 {% elif event.type == 'closed' %}
                 <div class="issue--event event__closed">
                     <div class="event--meta">

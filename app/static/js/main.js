@@ -5,8 +5,33 @@ require(['config'], function() {
             'jquery',
             'mentions'
     ], function($) {
+
+        var mentionsInputOptions = {
+            onDataRequest: function(mode, query, callback) {
+                $.ajax('/users.json', {
+                    data: {
+                        query: query
+                    },
+                    success: function(data) {
+                        callback.call(this, data['users']);
+                    }
+                });
+            }
+        }
+        $('textarea.mention').mentionsInput(mentionsInputOptions);
+
+        // Preprocess mention-enabled forms.
+        function preprocess(form) {
+            form.find('textarea.mention').each(function() {
+                $(this).mentionsInput('val', function(text) {
+                    form.find('textarea.mention-target').val(text);
+                });
+            });
+            return form;
+        }
+
         // Deleting things.
-        $('[data-method=delete]').on('click', function(e) {
+        $(document.body).on('click', '[data-method=delete]', function(e) {
             e.preventDefault();
 
             var link = $(this),
@@ -31,6 +56,7 @@ require(['config'], function() {
             $.ajax(url, {
                 type: 'PUT',
                 success: function() {
+                    // Cheating :)
                     window.location.reload()
                 }
             });
@@ -38,37 +64,91 @@ require(['config'], function() {
         });
 
         // Editing.
-        $('[data-action=edit]').on('click', function(e) {
+        $(document.body).on('click', '[data-action=edit]', function(e) {
             e.preventDefault();
-            var parent = $(this).closest('js-parent'),
+            var parent = $(this).closest('.js-parent'),
                 editable = parent.find('.js-editable'),
-                raw = editable.data('raw');
+                raw = editable.data('raw'),
+                form = $('<form class="js-preprocess">\
+                            <div><textarea class="mention">'+raw+'</textarea></div>\
+                            <textarea name="body" class="mention-target"></textarea>\
+                            <ul class="form--attachments">\
+                            <li><h6>New Attachments</h6></li>\
+                            <li class="input"><input type="file" name="file0"></li>\
+                            </ul>\
+                        </form>'),
+                stashed = $('<div class="stashed" style="display:none;">'+editable.html()+'</div>'),
+                actions = parent.find('[class*=actions]').first(),
+                url = $(this).attr('href');
+
+            actions.html('\
+               <li><a href="'+url+'" data-action="cancel">cancel</a></li>\
+               <li><a href="'+url+'" data-action="update">update</a></li>\
+               ');
+
+            editable.empty();
+            editable.append(form);
+            editable.append(stashed);
+            form.find('textarea.mention')
+                .mentionsInput(mentionsInputOptions)
+                .focus();
+
+            return false;
+        });
+        $(document.body).on('click', '[data-action=cancel]', function(e) {
+            e.preventDefault();
+            var parent = $(this).closest('.js-parent'),
+                editable = parent.find('.js-editable'),
+                stashed = parent.find('.stashed'),
+                actions = parent.find('[class*=actions]').first(),
+                url = $(this).attr('href');
+
+            actions.html('\
+               <li><a href="'+url+'" data-action="edit">edit</a></li>\
+               <li><a href="'+url+'" data-method="delete">delete</a></li>\
+               ');
+
+            editable.html(stashed.html());
+            return false;
+        });
+
+        $(document.body).on('click', '[data-action=update]', function(e) {
+            e.preventDefault();
+
+            var parent = $(this).closest('.js-parent'),
+                editable = parent.find('.js-editable'),
+                actions = parent.find('[class*=actions]').first(),
+                form = preprocess(editable.find('form'))[0],
+                url = $(this).attr('href'),
+                formData = new FormData(form);
+
+            $.ajax(url, {
+                method: 'PUT',
+                beforeSend: function(xhr) {
+                },
+                data: formData,
+                success: function(data) {
+                    parent.html($(data['html']).html());
+                },
+                cache: false,
+                contentType: false,
+                processData: false
+            });
+
+            actions.html('\
+               <li><a href="'+url+'" data-action="edit">edit</a></li>\
+               <li><a href="'+url+'" data-method="delete">delete</a></li>\
+               ');
 
             return false;
         });
 
-        $('textarea.mention').mentionsInput({
-            onDataRequest: function(mode, query, callback) {
-                $.ajax('/users.json', {
-                    data: {
-                        query: query
-                    },
-                    success: function(data) {
-                        callback.call(this, data['users']);
-                    }
-                });
-            }
+        $(document.body).on('click', '.js-preprocess input[type=submit]', function() {
+            var form = $(this).closest('.js-preprocess');
+            preprocess(form);
         });
 
-        $('.js-preprocess input[type=submit]').on('click', function(e) {
-            $('textarea.mention').each(function() {
-                $(this).mentionsInput('val', function(text) {
-                    $('textarea.mention-target').val(text);
-                });
-            });
-        });
-
-        $('.js-lightboxable').on('click', function() {
+        $(document.body).on('click', '.js-lightboxable', function() {
             var full_url = $(this).data('full');
             $('.overlay').fadeIn();
             $('.lightbox').html('<img src="'+full_url+'">');
@@ -78,7 +158,7 @@ require(['config'], function() {
             $(this).fadeOut();
         });
 
-        $('.form--attachments').on('change', 'input[type=file]', function() {
+        $(document.body).on('change', '.form--attachments input[type=file]', function() {
             if ( $(this).val() ) {
                 var el = $(this).closest('.input'),
                     idx = el.index();
@@ -89,7 +169,7 @@ require(['config'], function() {
             }
         });
 
-        $('form').on('click', '.js-clear-input', function(e) {
+        $(document.body).on('click', '.js-clear-input', function(e) {
             e.preventDefault();
             $(this).closest('.input').find('input').val('');
             $(this).remove();
