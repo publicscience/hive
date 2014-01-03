@@ -163,6 +163,7 @@ class Issue(Note):
             }
             for k,v in c_updates.iteritems():
                 setattr(c, k, v)
+            c.save()
             self.comments.append(c)
 
     def _sync_events(self):
