@@ -135,6 +135,12 @@ class Project(db.Document):
         file = drive.files().insert(body=body, media_body=media_body).execute()
         return file['id']
 
+    def folder_url(self):
+        #drive = google.drive_api(creds=self.author.google_creds)
+        #folder = drive.files().get(fileId=self.folder_id).execute()
+        #return folder.get('alternateLink')
+        return 'https://drive.google.com/#folders/%s' % self.folder_id
+
     @classmethod
     def pre_delete(cls, sender, document, **kwargs):
         for issue in document.issues:
