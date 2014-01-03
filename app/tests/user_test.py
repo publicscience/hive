@@ -1,4 +1,4 @@
-import unittest, json
+import json
 from mock import MagicMock
 from app import app
 from app.models.user import User, current_user

@@ -44,6 +44,3 @@ class UtilTest(unittest.TestCase):
         self.assertEqual(mentions[1].group('mention'), 'Kira SK')
         self.assertEqual(mentions[1].group('type'), 'user')
         self.assertEqual(mentions[1].group('id'), '7890')
-
-if __name__ == '__main__':
-    unittest.main()

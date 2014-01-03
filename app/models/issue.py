@@ -85,15 +85,6 @@ class Issue(Note):
                 i.save()
         self.save()
 
-    @classmethod
-    def pre_delete(cls, sender, document, **kwargs):
-        # Have to manually clean up references to this issue.
-        for u in document.mentions:
-            u.references = [r for r in u.references if r != self]
-            u.save()
-        for c in document.comments:
-            c.delete()
-
     # Corresponding GitHub endpoint for this issue.
     def linked_url(self, end=''):
         if self.linked():
@@ -231,11 +222,20 @@ class Issue(Note):
         return next((e for e in reversed(self.events) if e.type=='opened'), None)
 
     def find_comment(self, id):
-        return next(c_ for c_ in self.comments if str(c_.id)==id)
+        return next(c_ for c_ in self.comments if c_.id==id)
 
     def delete_comment(self, id):
         c = self.find_comment(id)
         self.comments.remove(c)
         self.save()
+
+    @classmethod
+    def pre_delete(cls, sender, document, **kwargs):
+        # Have to manually clean up references to this issue.
+        for u in document.mentions:
+            u.references = [r for r in u.references if r != document]
+            u.save()
+        for c in document.comments:
+            c.delete()
 
 signals.pre_delete.connect(Issue.pre_delete, sender=Issue)

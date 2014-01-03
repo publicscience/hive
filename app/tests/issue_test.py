@@ -1,37 +1,24 @@
-import unittest, json
+import json
 from mock import MagicMock
 from app import app
-from flask import session
 from . import AppCase
 from app.models.issue import Issue
 from app.models.user import User
 from app.models.project import Project
+from app.models.comment import Comment
 
 class IssueTest(AppCase):
     def setUp(self):
         self.setup_app()
-
-        self.test_user = User(
-                name='Numpy Ping',
-                google_id='12345',
-                picture='http://foo.com/image.png',
-                email='foo@email.com'
-        )
-        self.test_user.save()
+        self.create_user()
+        self.create_project()
 
         self.mock_current_user = self.create_patch('app.models.user.current_user')
         self.mock_current_user.return_value = self.test_user
 
-        self.project = Project(
-                name='Proj',
-                repo='pub/bar',
-                author=self.test_user
-        )
-        self.project.save()
-
         self.issue = Issue(
                 title='Some important issue',
-                project=self.project,
+                project=self.test_project,
                 author=self.test_user
         )
         self.issue.save()
@@ -78,12 +65,12 @@ class IssueTest(AppCase):
     def test_parse_references(self):
         issue_ = Issue(
                 title='Referenced issue',
-                project=self.project,
+                project=self.test_project,
                 author=self.test_user
         )
         issue_.save()
 
-        self.issue.body = 'Some body text referencing this issue /%s/issues/%s' % (self.project.name, issue_.id)
+        self.issue.body = 'Some body text referencing this issue /%s/issues/%s' % (self.test_project.name, issue_.id)
 
         self.issue.parse_references(self.issue.body)
 
@@ -94,7 +81,7 @@ class IssueTest(AppCase):
         self.assertEqual(len(issue_.events), 1)
         self.assertEqual(self.issue.references[0].title, 'Referenced issue')
         self.assertEqual(issue_.events[0].data, {
-            'project_slug': self.project.slug,
+            'project_slug': self.test_project.slug,
             'referencer_id': self.issue.id,
             'referencer_title': self.issue.title
         })
@@ -175,4 +162,26 @@ class IssueTest(AppCase):
         self.issue.push_to_github()
 
         self.assertEqual(self.issue.github_id, 1)
+
+    def test_pre_delete(self):
+        c = Comment(body='foo', author=self.test_user)
+        c.issue = self.issue
+        c.save()
+
+        self.test_user.references.append(self.issue)
+        self.test_user.save()
+
+        self.issue.mentions.append(self.test_user)
+        self.issue.comments.append(c)
+        self.issue.save()
+
+        self.assertEqual(Issue.objects.count(), 1)
+        self.assertEqual(Comment.objects.count(), 1)
+        self.assertEqual(len(self.test_user.references), 1)
+
+        self.issue.delete()
+
+        self.assertEqual(Issue.objects.count(), 0)
+        self.assertEqual(Comment.objects.count(), 0)
+        self.assertEqual(len(self.test_user.references), 0)
 
