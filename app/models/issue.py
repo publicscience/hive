@@ -150,7 +150,8 @@ class Issue(Note):
                     'created_at': datetime.strptime(gc['created_at'], '%Y-%m-%dT%H:%M:%SZ'),
                     'updated_at': datetime.strptime(gc['updated_at'], '%Y-%m-%dT%H:%M:%SZ'),
                     'body': gc['body'],
-                    'author': c_author
+                    'author': c_author,
+                    'issue': self
             }
             for k,v in c_updates.iteritems():
                 setattr(c, k, v)
