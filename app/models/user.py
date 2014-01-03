@@ -29,7 +29,8 @@ class User(db.Document):
                     google_id='0',
                     github_id=0,
                     name='A pal on Github',
-                    picture='http://localhost:5000/assets/img/github_pal.png'
+                    picture='http://localhost:5000/assets/img/github_pal.png',
+                    email='noemail@email.com'
             )
             def_user.save()
         return def_user

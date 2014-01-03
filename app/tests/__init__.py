@@ -29,9 +29,7 @@ class AppCase(RequiresMocks):
         self.mock_github.return_value = self.mock_github_api
 
         # Mock the Google API
-        self.mock_google = self.create_patch('app.routes.oauth.google.api')
-        self.mock_google_api = MagicMock()
-        self.mock_google.return_value = self.mock_google_api
+        self.mock_google_user_info = self.create_patch('app.routes.oauth.google.user_info')
 
     def teardown_dbs(self):
         Issue.drop_collection()

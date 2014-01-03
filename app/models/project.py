@@ -100,7 +100,8 @@ class Project(db.Document):
 
         # Add permissions for all of this project's users.
         for user in self.users:
-            if user is not self.author:
+            # Exclude the author and the default user.
+            if user is not self.author and user.google_id != '0':
                 permission = {
                     'value': user.email,
                     'type': 'user',

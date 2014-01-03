@@ -9,8 +9,6 @@ class UserTest(AppCase):
     def setUp(self):
         self.setup_app()
 
-        self.mock_response = MagicMock()
-
     def tearDown(self):
         self.teardown_dbs()
 
@@ -23,12 +21,12 @@ class UserTest(AppCase):
         self.assertEqual(default.name, 'A pal on Github')
 
     def test_creates_current_user(self):
-        self.mock_response.json.return_value = {
+        self.mock_google_user_info.return_value = {
                 'id': '12345',
                 'name': 'Numpy',
-                'picture': 'http://foo.com/image.png'
+                'picture': 'http://foo.com/image.png',
+                'email': 'foo@gmail.com'
         }
-        self.mock_google_api.get.return_value = self.mock_response
 
         with app.test_request_context():
             c_user = current_user()
@@ -36,17 +34,17 @@ class UserTest(AppCase):
             self.assertEqual(User.objects.count(), 1)
 
     def test_default_user_image(self):
-        self.mock_response.json.return_value = {
+        self.mock_google_user_info.return_value = {
                 'id': '12345',
-                'name': 'Numpy'
+                'name': 'Numpy',
+                'email': 'foo@gmail.com'
         }
-        self.mock_google_api.get.return_value = self.mock_response
         with app.test_request_context():
             c_user = current_user()
             self.assertEqual(c_user.picture, 'http://localhost/assets/img/default_pic.png')
 
     def test_returns_current_user(self):
-        u = User(name='Numpy', google_id='12345')
+        u = User(name='Numpy', google_id='12345', email='foo@gmail.com')
         u.save()
         with app.test_request_context():
             session['user_id'] = '12345'
@@ -61,7 +59,7 @@ class UserTest(AppCase):
             'id': '12345'
         }
 
-        u = User(name=expected['name'], google_id=expected['id'])
+        u = User(name=expected['name'], google_id=expected['id'], email='foo@gmail.com')
         u.save()
 
         resp = self.app.get('/users.json?query=Num')

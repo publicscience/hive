@@ -58,13 +58,3 @@ def drive_api(creds=None):
         creds = session['google_creds']
     creds = Credentials.new_from_json(creds)
     return build('drive', 'v2', http=creds.authorize(httplib2.Http()))
-
-def delete_file(file):
-    pass
-
-def create_document(name):
-    pass
-
-def delete_document(name):
-    pass
-

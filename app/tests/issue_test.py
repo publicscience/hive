@@ -11,24 +11,30 @@ class IssueTest(AppCase):
     def setUp(self):
         self.setup_app()
 
-        self.project = Project(name='Proj', repo='pub/bar')
+        self.test_user = User(
+                name='Numpy Ping',
+                google_id='12345',
+                picture='http://foo.com/image.png',
+                email='foo@email.com'
+        )
+        self.test_user.save()
+
+        self.mock_current_user = self.create_patch('app.models.user.current_user')
+        self.mock_current_user.return_value = self.test_user
+
+        self.project = Project(
+                name='Proj',
+                repo='pub/bar',
+                author=self.test_user
+        )
         self.project.save()
 
         self.issue = Issue(
                 title='Some important issue',
-                project=self.project
+                project=self.project,
+                author=self.test_user
         )
         self.issue.save()
-
-        test_user = User(
-                name='Numpy Ping',
-                google_id='12345',
-                picture='http://foo.com/image.png'
-        )
-        test_user.save()
-
-        self.mock_current_user = self.create_patch('app.models.user.current_user')
-        self.mock_current_user.return_value = test_user
 
     def tearDown(self):
         self.teardown_dbs()
@@ -72,7 +78,8 @@ class IssueTest(AppCase):
     def test_parse_references(self):
         issue_ = Issue(
                 title='Referenced issue',
-                project=self.project
+                project=self.project,
+                author=self.test_user
         )
         issue_.save()
 
@@ -93,7 +100,7 @@ class IssueTest(AppCase):
         })
 
     def test_parse_mentions(self):
-        u = User(name='Numpy', google_id='1')
+        u = User(name='Numpy', google_id='1', email='foo@email.com')
         u.save()
 
         # Tests adds mentions
@@ -115,7 +122,7 @@ class IssueTest(AppCase):
         self.assertEqual(len(u.references), 0)
 
         # Tests multiple mentions
-        u_ = User(name='Lumpy', google_id='2')
+        u_ = User(name='Lumpy', google_id='2', email='bar@email.com')
         u_.save()
 
         self.issue.body = 'Some body text with two mentions @[Numpy](user:%s) @[Lumpy](user:%s)' % (u.google_id, u_.google_id)
