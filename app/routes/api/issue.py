@@ -116,14 +116,14 @@ def edit_issue(slug, id):
         flash('Something is wrong -- We need your guidance!')
         return render_template('issue/edit.html', form=form, issue=issue, project=issue.project)
 
-@app.route('/p/issues/<string:id>/close', methods=['PUT'])
+@app.route('/issues/<string:id>/close', methods=['PUT'])
 @requires_login
 def close_issue(id):
     issue = Issue.objects.get_or_404(id=id)
     issue.close()
     return jsonify({'success':True})
 
-@app.route('/p/issues/<string:id>/open', methods=['PUT'])
+@app.route('/issues/<string:id>/open', methods=['PUT'])
 @requires_login
 def open_issue(id):
     issue = Issue.objects.get_or_404(id=id)
