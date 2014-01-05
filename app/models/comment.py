@@ -18,13 +18,13 @@ class Comment(Note):
         if self.issue.linked():
             # Update
             if self.github_id:
-                url = '/repos/' + self.issue.project.repo + '/issues/' + str(issue.github_id) + '/comments/' + str(self.github_id)
+                url = '/repos/' + self.issue.project.repo + '/issues/' + str(self.issue.github_id) + '/comments/' + str(self.github_id)
                 resp = github.api().patch(url, data=json.dumps({'body':self.body}))
                 if resp.status_code != 200:
                     raise Exception('Error updating comment on GitHub.')
             # Create
             else:
-                url = '/repos/' + self.issue.project.repo + '/issues/' + str(issue.github_id) + '/comments'
+                url = '/repos/' + self.issue.project.repo + '/issues/' + str(self.issue.github_id) + '/comments'
                 resp = github.api().post(url, data=json.dumps({'body':self.body}))
                 if resp.status_code != 201:
                     raise Exception('Error creating comment on GitHub.')
