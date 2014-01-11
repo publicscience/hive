@@ -129,9 +129,21 @@ class Project(db.Document):
     def upload_file(self, filename):
         drive = google.drive_api(creds=self.author.google_creds)
         media_body = MediaFileUpload(filename, resumable=True)
+
+        # If there's no attachment folder, create one.
+        if not self.attachment_folder_id:
+            body = {
+                'title': 'uploads',
+                'mimeType': 'application/vnd.google-apps.folder'
+            }
+            drive = google.drive_api(creds=self.author.google_creds)
+            resp = drive.files().insert(body=body).execute()
+            self.attachment_folder_id = resp['id']
+            self.save()
+
         body = {
                 'title': filename.split('/')[-1],
-                'parents': [{'id': self.folder_id}]
+                'parents': [{'id': self.attachment_folder_id}]
         }
         file = drive.files().insert(body=body, media_body=media_body).execute()
         return file['id']
