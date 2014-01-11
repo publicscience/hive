@@ -21,6 +21,7 @@ class Project(db.Document):
 
     # Google Drive Folder id
     folder_id = db.StringField()
+    attachment_folder_id = db.StringField()
 
     attachments = db.ListField(db.ReferenceField('Attachment'))
 
