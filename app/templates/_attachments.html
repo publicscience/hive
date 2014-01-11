@@ -1,4 +1,5 @@
 {% macro render(attachments, owner) -%}
+<div>
     <h6>Attachments</h6>
     <ul class="attachments">
         {% for attachment in attachments %}
@@ -18,4 +19,5 @@
         <li><h6>Attachments</h6></li>
         <li class="input"><input type="file" name="file0"></li>
     </ul>
+</div>
 {%- endmacro %}

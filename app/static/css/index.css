@@ -946,10 +946,10 @@ nav {
 .body {
   padding: 0em 0 3em 0;
   color: #555555; }
-  .body ul {
+  .body > ul {
     margin-left: 1.5em; }
-  .body li {
-    list-style-type: circle; }
+    .body > ul li {
+      list-style-type: circle; }
 
 .comment--body {
   font-size: 0.9em;
